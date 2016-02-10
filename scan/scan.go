@@ -3,6 +3,8 @@ package scan
 import (
 	"fmt"
 	"io"
+
+	"github.com/bjwbell/gir/value"
 )
 
 // Copied from robpike.io/ivy/scan
@@ -39,15 +41,38 @@ func (i Token) String() string {
 	return fmt.Sprintf("%v: %q", i.Type, i.Text)
 }
 
+// stateFn represents the state of the scanner as a function that returns the next state.
+type stateFn func(*Scanner) stateFn
+
 type Scanner struct {
-	tokens chan Token // channel of scanned items
-	r      io.ByteReader
-	done   bool
-	name   string // the name of the input; used only for error reports
-	buf    []byte
-	input  string // the line of text being scanned.
-	line   int    // line number in input
-	pos    int    // current position in the input
-	start  int    // start position of this item
-	width  int    // width of last rune read from input
+	tokens  chan Token // channel of scanned items
+	context value.Context
+	r       io.ByteReader
+	done    bool
+	name    string // the name of the input; used only for error reports
+	buf     []byte
+	input   string  // the line of text being scanned.
+	state   stateFn // the next lexing function to enter
+	line    int     // line number in input
+	pos     int     // current position in the input
+	start   int     // start position of this item
+	width   int     // width of last rune read from input
+}
+
+// New creates a new scanner for the input string.
+func New(context value.Context, name string, r io.ByteReader) *Scanner {
+	l := &Scanner{
+		r:       r,
+		name:    name,
+		line:    1,
+		tokens:  make(chan Token, 2), // We need a little room to save tokens.
+		context: context,
+		state:   lexAny,
+	}
+	return l
+}
+
+// lexAny scans non-space items.
+func lexAny(l *Scanner) stateFn {
+	panic("unimplemented")
 }
