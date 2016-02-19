@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/bjwbell/gir/parse"
@@ -48,8 +51,14 @@ func main() {
 		*pkgName = filePath(file)
 	}
 
-	scanner := scan.New(context, "<args>", strings.NewReader(strings.Join(flag.Args(), " ")))
-	parser := parse.NewParser("<args>", scanner, context)
-
+	var fd io.Reader
+	var err error
+	fd, err = os.Open(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "gir: %s\n", err)
+		os.Exit(1)
+	}
+	scanner := scan.New(context, file, bufio.NewReader(fd))
+	parser := parse.NewParser(file, scanner, context)
 	fmt.Printf("parser: %#v\n", parser)
 }

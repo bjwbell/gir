@@ -1,2 +1,2 @@
 # gir
-grrr
+Go Intermediate Representation
