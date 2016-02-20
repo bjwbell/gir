@@ -26,6 +26,7 @@ const (
 	Identifier // alphanumeric identifier
 	Number     // simple number
 	Op         // "op", operator keyword
+	RightParen // ')'
 	String     // quoted string (includes quotes)
 )
 
@@ -75,4 +76,25 @@ func New(context value.Context, name string, r io.ByteReader) *Scanner {
 // lexAny scans non-space items.
 func lexAny(l *Scanner) stateFn {
 	panic("unimplemented")
+}
+
+// Next returns the next token.
+func (l *Scanner) Next() Token {
+	// The lexer is concurrent but we don't want it to run in parallel
+	// with the rest of the interpreter, so we only run the state machine
+	// when we need a token.
+	for l.state != nil {
+		select {
+		case tok := <-l.tokens:
+			return tok
+		default:
+			// Run the machine
+			l.state = l.state(l)
+		}
+	}
+	if l.tokens != nil {
+		close(l.tokens)
+		l.tokens = nil
+	}
+	return Token{EOF, l.pos, "EOF"}
 }

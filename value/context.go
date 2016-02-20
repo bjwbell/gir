@@ -6,6 +6,8 @@
 
 package value
 
+import "github.com/bjwbell/gir/config"
+
 // Expr and Context are defined here to avoid import cycles
 // between parse and value.
 
@@ -21,6 +23,10 @@ type Expr interface {
 // is defined separately, here, because of the dependence on Expr
 // and the import cycle that would otherwise result.
 type Context interface {
+
+	// Lookup returns the configuration state for evaluation.
+	Config() *config.Config
+
 	// Lookup returns the value of a symbol.
 	Lookup(name string) Value
 
