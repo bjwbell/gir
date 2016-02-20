@@ -75,7 +75,8 @@ func New(context value.Context, name string, r io.ByteReader) *Scanner {
 
 // lexAny scans non-space items.
 func lexAny(l *Scanner) stateFn {
-	panic("unimplemented")
+	fmt.Println("lexAny: TODO")
+	return nil
 }
 
 // Next returns the next token.

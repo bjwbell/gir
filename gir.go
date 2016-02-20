@@ -9,12 +9,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bjwbell/gir/config"
+	"github.com/bjwbell/gir/exec"
 	"github.com/bjwbell/gir/parse"
+	"github.com/bjwbell/gir/run"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/value"
 )
 
 var (
+	conf    config.Config
 	context value.Context
 )
 
@@ -32,6 +36,9 @@ func filePath(pathName string) string {
 }
 
 func main() {
+
+	context = exec.NewContext(&conf)
+
 	var pkgName = flag.String("pkg", "", "package name")
 	var f = flag.String("f", "", "input *.gir file ")
 	var fn = flag.String("fn", "", "function name")
@@ -60,5 +67,11 @@ func main() {
 	}
 	scanner := scan.New(context, file, bufio.NewReader(fd))
 	parser := parse.NewParser(file, scanner, context)
-	fmt.Printf("parser: %#v\n", parser)
+	interactive := false
+	ok := run.Run(parser, context, interactive)
+	if !ok {
+		fmt.Println("Error in run.Run")
+	} else {
+		fmt.Printf("parser: %#v\n", parser)
+	}
 }

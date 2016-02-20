@@ -78,6 +78,7 @@ func Run(p *parse.Parser, context value.Context, interactive bool) (success bool
 		if interactive {
 			fmt.Fprintln(writer)
 		}
+		return true
 	}
 }
 
