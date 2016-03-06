@@ -31,6 +31,7 @@ const (
 	Number     // simple number
 	Op         // "op", operator keyword
 	Rational   // rational number like 2/3
+	LeftParen  // '('
 	RightParen // ')'
 	Semicolon  // ';'
 	String     // quoted string (includes quotes)
@@ -54,18 +55,20 @@ const eof = -1
 type stateFn func(*Scanner) stateFn
 
 type Scanner struct {
-	tokens  chan Token // channel of scanned items
-	context value.Context
-	r       io.ByteReader
-	done    bool
-	name    string // the name of the input; used only for error reports
-	buf     []byte
-	input   string  // the line of text being scanned.
-	state   stateFn // the next lexing function to enter
-	line    int     // line number in input
-	pos     int     // current position in the input
-	start   int     // start position of this item
-	width   int     // width of last rune read from input
+	tokens     chan Token // channel of scanned items
+	context    value.Context
+	r          io.ByteReader
+	done       bool
+	name       string // the name of the input; used only for error reports
+	buf        []byte
+	input      string  // the line of text being scanned.
+	leftDelim  string  // start of action
+	rightDelim string  // end of action
+	state      stateFn // the next lexing function to enter
+	line       int     // line number in input
+	pos        int     // current position in the input
+	start      int     // start position of this item
+	width      int     // width of last rune read from input
 }
 
 // errorf returns an error token and continues to scan.
@@ -235,21 +238,58 @@ func lexAny(l *Scanner) stateFn {
 		l.next()
 		fallthrough // for ==
 	case isAlphaNumeric(r):
-		panic("unimplemented")
+		l.backup()
+		return lexIdentifier
 	case r == '[':
 		panic("unimplemented")
 	case r == ']':
 		panic("unimplemented")
 	case r == '(':
-		panic("unimplemented")
+		l.emit(LeftParen)
+		return lexAny
 	case r == ')':
-		panic("unimplemented")
+		l.emit(RightParen)
+		return lexAny
 	case r <= unicode.MaxASCII && unicode.IsPrint(r):
 		l.emit(Char)
 		return lexAny
 	default:
 		return l.errorf("unrecognized character: %#U", r)
 	}
+}
+
+// lexIdentifier scans an alphanumeric.
+func lexIdentifier(l *Scanner) stateFn {
+Loop:
+	for {
+		switch r := l.next(); {
+		case isAlphaNumeric(r):
+			// absorb.
+		default:
+			l.backup()
+			if !l.atTerminator() {
+				return l.errorf("bad character %#U", r)
+			}
+			break Loop
+		}
+	}
+	return lexAny
+}
+
+// atTerminator reports whether the input is at valid termination character to
+// appear after an identifier.
+func (l *Scanner) atTerminator() bool {
+	r := l.peek()
+	if r == eof || isSpace(r) || isEndOfLine(r) || unicode.IsPunct(r) || unicode.IsSymbol(r) {
+		return true
+	}
+	// Does r start the delimiter? This can be ambiguous (with delim=="//", $x/2 will
+	// succeed but should fail) but only in extremely rare cases caused by willfully
+	// bad choice of delimiter.
+	if rd, _ := utf8.DecodeRuneInString(l.rightDelim); rd == r {
+		return true
+	}
+	return false
 }
 
 // Next returns the next token.
