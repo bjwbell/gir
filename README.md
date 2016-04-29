@@ -1,8 +1,8 @@
-# gir
+B# gir
 Go Intermediate Representation
 
 # format
-The GIR language is format borrows from the LLVM language reference, http://llvm.org/docs/LangRef.html.
+The GIR format borrows from the LLVM language reference, http://llvm.org/docs/LangRef.html.
 
 Example, multiple an integer by 8.
 ```
