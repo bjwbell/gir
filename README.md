@@ -1,4 +1,4 @@
-B# gir
+# gir
 Go Intermediate Representation
 
 # format
