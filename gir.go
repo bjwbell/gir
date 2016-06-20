@@ -66,6 +66,10 @@ func main() {
 		os.Exit(1)
 	}
 	scanner := scan.New(context, file, bufio.NewReader(fd))
+	fmt.Println("Tokens: ")
+	for tok := scanner.Next(); tok.Type != scan.EOF; tok = scanner.Next() {
+		fmt.Println(tok, "type ", tok.Type)
+	}
 	parser := parse.NewParser(file, scanner, context)
 	interactive := false
 	ok := run.Run(parser, context, interactive)

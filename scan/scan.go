@@ -20,11 +20,14 @@ type Token struct {
 	Text string
 }
 
+//go:generate stringer -type=Type
+
 const (
 	EOF   Type = iota // zero value so closed channel delivers EOF
 	Error             // error occurred; value is text of error
 	Newline
 	// types of tokens
+	Func       // 'func'
 	Assign     // '='
 	Char       // printable ASCII character; grab bag for comma etc.
 	Identifier // alphanumeric identifier
@@ -33,6 +36,8 @@ const (
 	Rational   // rational number like 2/3
 	LeftParen  // '('
 	RightParen // ')'
+	LeftBrace  // '{'
+	RightBrace // '}'
 	Semicolon  // ';'
 	String     // quoted string (includes quotes)
 )
@@ -244,6 +249,12 @@ func lexAny(l *Scanner) stateFn {
 		panic("unimplemented")
 	case r == ']':
 		panic("unimplemented")
+	case r == '{':
+		l.emit(LeftBrace)
+		return lexAny
+	case r == '}':
+		l.emit(RightBrace)
+		return lexAny
 	case r == '(':
 		l.emit(LeftParen)
 		return lexAny
@@ -268,11 +279,13 @@ Loop:
 		default:
 			l.backup()
 			if !l.atTerminator() {
-				return l.errorf("bad character %#U", r)
+				panic("UNHANDLED PANIC")
+				//return l.errorf("bad character %#U", r)
 			}
 			break Loop
 		}
 	}
+	l.emit(Identifier)
 	return lexAny
 }
 
