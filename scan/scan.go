@@ -279,8 +279,7 @@ Loop:
 		default:
 			l.backup()
 			if !l.atTerminator() {
-				panic("UNHANDLED PANIC")
-				//return l.errorf("bad character %#U", r)
+				return l.errorf("bad character %#U", r)
 			}
 			break Loop
 		}
