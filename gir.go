@@ -12,7 +12,6 @@ import (
 	"github.com/bjwbell/gir/config"
 	"github.com/bjwbell/gir/exec"
 	"github.com/bjwbell/gir/parse"
-	"github.com/bjwbell/gir/run"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/value"
 )
@@ -71,11 +70,5 @@ func main() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
 	parser := parse.NewParser(file, scanner, context)
-	interactive := false
-	ok := run.Run(parser, context, interactive)
-	if !ok {
-		fmt.Println("Error in run.Run")
-	} else {
-		fmt.Printf("parser: %#v\n", parser)
-	}
+	fmt.Printf("parser: %#v\n", parser)
 }
