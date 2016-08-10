@@ -38,9 +38,7 @@ func main() {
 
 	context = exec.NewContext(&conf)
 
-	var pkgName = flag.String("pkg", "", "package name")
 	var f = flag.String("f", "", "input *.gir file ")
-	var fn = flag.String("fn", "", "function name")
 	flag.Parse()
 
 	file := ""
@@ -49,12 +47,6 @@ func main() {
 		file = *f
 	} else {
 		log.Fatalf("Error no file provided")
-	}
-	if *fn == "" {
-		log.Fatalf("Error no function name(s) provided")
-	}
-	if *pkgName == "" {
-		*pkgName = filePath(file)
 	}
 
 	var fd io.Reader
