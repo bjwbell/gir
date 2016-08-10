@@ -1,3 +1,5 @@
+// COPIED FROM robpike.io/ivy/parse
+
 package parse
 
 import (
@@ -6,8 +8,6 @@ import (
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/value"
 )
-
-// COPIED FROM robpike.io/ivy/parse
 
 // tree formats an expression in an unambiguous form for debugging.
 func tree(e interface{}) string {
@@ -175,7 +175,6 @@ func (p *Parser) peek() scan.Token {
 // Line reads a line of input and returns the values it evaluates.
 // A nil returned slice means there were no values.
 // The boolean reports whether the line is valid.
-
 func (p *Parser) Line() ([]value.Expr, bool) {
 	tok := p.peek()
 	switch tok.Type {
@@ -241,7 +240,6 @@ func (p *Parser) statementList(tok scan.Token) ([]value.Expr, bool) {
 	return exprs, true
 }
 
-
 // expr
 //operand
 //operand binop expr
@@ -292,7 +290,6 @@ func (p *Parser) operand(tok scan.Token, indexOK bool) value.Expr {
 	}
 	return expr
 }
-
 
 // index
 //expr
@@ -373,14 +370,11 @@ func (p *Parser) numberOrVector(tok scan.Token) value.Expr {
 	return slice
 }
 
-
 func (p *Parser) variable(name string) variableExpr {
 	return variableExpr{
 		name: name,
 	}
 }
-
-
 
 // evalString turns a parsed string constant into a slice of
 // value.Exprs each of which is a value.Char.
