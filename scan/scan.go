@@ -39,6 +39,8 @@ const (
 	LeftBrace  // '{'
 	RightBrace // '}'
 	Semicolon  // ';'
+	LeftBrack  // '['
+	RightBrack // ']'
 	String     // quoted string (includes quotes)
 )
 
