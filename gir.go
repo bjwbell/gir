@@ -56,12 +56,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "gir: %s\n", err)
 		os.Exit(1)
 	}
-	scanner := scan.New(context, file, bufio.NewReader(fd))
+	var fd2 io.Reader
+	var err2 error
+	fd2, err2 = os.Open(file)
+	if err2 != nil {
+		fmt.Fprintf(os.Stderr, "gir: %s\n", err2)
+		os.Exit(1)
+	}
+	scanner1 := scan.New(context, file, bufio.NewReader(fd))
+	scanner2 := scan.New(context, file, bufio.NewReader(fd2))
+
 	fmt.Println("Tokens: ")
-	for tok := scanner.Next(); tok.Type != scan.EOF; tok = scanner.Next() {
+	for tok := scanner1.Next(); tok.Type != scan.EOF; tok = scanner1.Next() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
-	parser := parse.NewParser(file, scanner, context)
+	parser := parse.NewParser(file, scanner2, context)
 	exprs, ok := parser.Line()
 	fmt.Println("exprs: ", exprs, ", ok: ", ok)
 	fmt.Printf("parser: %#v\n", parser)
