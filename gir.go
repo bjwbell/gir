@@ -62,5 +62,7 @@ func main() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
 	parser := parse.NewParser(file, scanner, context)
+	exprs, ok := parser.Line()
+	fmt.Println("exprs: ", exprs, ", ok: ", ok)
 	fmt.Printf("parser: %#v\n", parser)
 }
