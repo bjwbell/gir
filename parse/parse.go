@@ -329,8 +329,7 @@ func (p *Parser) number(tok scan.Token) (expr value.Expr, str string) {
 		// TODO
 		str = "<scan.String>"
 	case scan.Number, scan.Rational:
-		// TODO
-		expr, err = nil, nil
+		expr, err = value.Parse(p.context.Config(), text)
 	case scan.LeftParen:
 		expr = p.expr(p.next())
 		tok := p.next()
