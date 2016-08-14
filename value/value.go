@@ -27,6 +27,11 @@ type Value interface {
 // Error is the type we recognize as a recoverable run-time error.
 type Error string
 
+
+func (err Error) Error() string {
+	return string(err)
+}
+
 // Errorf panics with the formatted string, with type Error.
 func Errorf(format string, args ...interface{}) {
 	panic(Error(fmt.Sprintf(format, args...)))
