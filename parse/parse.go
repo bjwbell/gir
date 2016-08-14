@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bjwbell/gir/scan"
+	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
 )
 
@@ -99,8 +100,8 @@ type Parser struct {
 	fileName   string
 	lineNum    int
 	errorCount int // Number of errors.
-	peekTok    scan.Token
-	curTok     scan.Token // most recent token from scanner
+	peekTok    token.Token
+	curTok     token.Token // most recent token from scanner
 	context    value.Context
 }
 
@@ -122,29 +123,29 @@ func (p *Parser) Println(args ...interface{}) {
 
 // FlushToNewline any remaining characters on the current input line.
 func (p *Parser) FlushToNewline() {
-	for p.curTok.Type != scan.Newline && p.curTok.Type != scan.EOF {
+	for p.curTok.Type != token.Newline && p.curTok.Type != token.EOF {
 		p.nextErrorOut(false)
 	}
 }
 
-func (p *Parser) next() scan.Token {
+func (p *Parser) next() token.Token {
 	return p.nextErrorOut(true)
 }
 
 // nextErrorOut accepts a flag whether to trigger a panic on error.
 // The flag is set to false when we are draining input tokens in FlushToNewline.
-func (p *Parser) nextErrorOut(errorOut bool) scan.Token {
+func (p *Parser) nextErrorOut(errorOut bool) token.Token {
 	tok := p.peekTok
-	if tok.Type != scan.EOF {
-		p.peekTok = scan.Token{Type: scan.EOF}
+	if tok.Type != token.EOF {
+		p.peekTok = token.Token{Type: token.EOF}
 	} else {
 		tok = p.scanner.Next()
 	}
-	if tok.Type == scan.Error && errorOut {
+	if tok.Type == token.Error && errorOut {
 		p.errorf("%q", tok)
 	}
 	p.curTok = tok
-	if tok.Type != scan.Newline {
+	if tok.Type != token.Newline {
 		// Show the line number before we hit the newline.
 		p.lineNum = tok.Line
 	}
@@ -152,7 +153,7 @@ func (p *Parser) nextErrorOut(errorOut bool) scan.Token {
 }
 
 func (p *Parser) errorf(format string, args ...interface{}) {
-	p.peekTok = scan.Token{Type: scan.EOF}
+	p.peekTok = token.Token{Type: token.EOF}
 	value.Errorf(format, args...)
 }
 
@@ -165,14 +166,73 @@ func (p *Parser) Loc() string {
 	return fmt.Sprintf("%s:%d: ", p.fileName, p.lineNum)
 }
 
-func (p *Parser) peek() scan.Token {
+func (p *Parser) peek() token.Token {
 	tok := p.peekTok
-	if tok.Type != scan.EOF {
+	if tok.Type != token.EOF {
 		return tok
 	}
 	p.peekTok = p.scanner.Next()
 	return p.peekTok
 }
+
+// func (p *Parse) ParseFile() ([]value.Expr, bool) {
+// 	// package clause
+// 	pos := p.expect(token.PACKAGE)
+// 	// GIR spec: The package clause is not a declaration;
+// 	// the package name does not appear in any scope.
+// 	ident := p.parseIdent()
+// 	if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
+// 		p.error(p.pos, "invalid package name _")
+// 	}
+// 	p.expectSemi()
+
+// 	// Don't bother parsing the rest if we had errors parsing the package clause.
+// 	// Likely not a Go source file at all.
+// 	if p.errors.Len() != 0 {
+// 		return nil
+// 	}
+
+// 	p.openScope()
+// 	p.pkgScope = p.topScope
+// 	var decls []ast.Decl
+// 	if p.mode&PackageClauseOnly == 0 {
+// 		// import decls
+// 		for p.tok == token.IMPORT {
+// 			decls = append(decls, p.parseGenDecl(token.IMPORT, p.parseImportSpec))
+// 		}
+
+// 		if p.mode&ImportsOnly == 0 {
+// 			// rest of package body
+// 			for p.tok != token.EOF {
+// 				decls = append(decls, p.parseDecl(syncDecl))
+// 			}
+// 		}
+// 	}
+// 	p.closeScope()
+
+// 	// resolve global identifiers within the same file
+// 	i := 0
+// 	for _, ident := range p.unresolved {
+// 		// i <= index for current ident
+// 		assert(ident.Obj == unresolved, "object already resolved")
+// 		ident.Obj = p.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
+// 		if ident.Obj == nil {
+// 			p.unresolved[i] = ident
+// 			i++
+// 		}
+// 	}
+
+// 	return &ast.File{
+// 		Doc:        doc,
+// 		Package:    pos,
+// 		Name:       ident,
+// 		Decls:      decls,
+// 		Scope:      p.pkgScope,
+// 		Imports:    p.imports,
+// 		Unresolved: p.unresolved[0:i],
+// 		Comments:   p.comments,
+// 	}
+// }
 
 // Line reads a line of input and returns the values it evaluates.
 // A nil returned slice means there were no values.
@@ -180,10 +240,10 @@ func (p *Parser) peek() scan.Token {
 func (p *Parser) Line() ([]value.Expr, bool) {
 	tok := p.peek()
 	switch tok.Type {
-	case scan.RightParen:
+	case token.RightParen:
 		// TODO
 		return nil, true
-	case scan.Op:
+	case token.Op:
 		// TODO
 		return nil, true
 	}
@@ -202,9 +262,9 @@ func (p *Parser) Line() ([]value.Expr, bool) {
 func (p *Parser) expressionList() ([]value.Expr, bool) {
 	tok := p.next()
 	switch tok.Type {
-	case scan.EOF:
+	case token.EOF:
 		return nil, false
-	case scan.Newline:
+	case token.Newline:
 		return nil, true
 	}
 	exprs, ok := p.statementList(tok)
@@ -213,7 +273,7 @@ func (p *Parser) expressionList() ([]value.Expr, bool) {
 	}
 	tok = p.next()
 	switch tok.Type {
-	case scan.EOF, scan.Newline:
+	case token.EOF, token.Newline:
 	default:
 		p.errorf("unexpected %s", tok)
 	}
@@ -226,13 +286,13 @@ func (p *Parser) expressionList() ([]value.Expr, bool) {
 // statementList:
 //expr
 //expr ';' expr
-func (p *Parser) statementList(tok scan.Token) ([]value.Expr, bool) {
+func (p *Parser) statementList(tok token.Token) ([]value.Expr, bool) {
 	expr := p.expr(tok)
 	var exprs []value.Expr
 	if expr != nil {
 		exprs = []value.Expr{expr}
 	}
-	if p.peek().Type == scan.Semicolon {
+	if p.peek().Type == token.Semicolon {
 		p.next()
 		more, ok := p.statementList(p.next())
 		if ok {
@@ -245,19 +305,19 @@ func (p *Parser) statementList(tok scan.Token) ([]value.Expr, bool) {
 // expr
 //operand
 //operand binop expr
-func (p *Parser) expr(tok scan.Token) value.Expr {
-	if p.peek().Type == scan.Assign && tok.Type != scan.Identifier {
+func (p *Parser) expr(tok token.Token) value.Expr {
+	if p.peek().Type == token.Assign && tok.Type != token.Identifier {
 		p.errorf("cannot assign to %s", tok)
 	}
 	expr := p.operand(tok, true)
 	tok = p.peek()
 	switch tok.Type {
-	case scan.Newline, scan.EOF, scan.RightParen, scan.RightBrack, scan.Semicolon:
+	case token.Newline, token.EOF, token.RightParen, token.RightBrack, token.Semicolon:
 		return expr
-	case scan.Identifier:
+	case token.Identifier:
 		// TODO
 		return nil
-	case scan.Operator, scan.Assign:
+	case token.Operator, token.Assign:
 		p.next()
 		return &binary{
 			left:  expr,
@@ -276,13 +336,13 @@ func (p *Parser) expr(tok scan.Token) value.Expr {
 //vector
 //operand [ Expr ]...
 //unop Expr
-func (p *Parser) operand(tok scan.Token, indexOK bool) value.Expr {
+func (p *Parser) operand(tok token.Token, indexOK bool) value.Expr {
 	var expr value.Expr
 	switch tok.Type {
-	case scan.Identifier:
+	case token.Identifier:
 		// TODO
 		fallthrough
-	case scan.Number, scan.Rational, scan.String, scan.LeftParen:
+	case token.Number, token.Rational, token.String, token.LeftParen:
 		expr = p.numberOrVector(tok)
 	default:
 		p.errorf("unexpected %s", tok)
@@ -298,11 +358,11 @@ func (p *Parser) operand(tok scan.Token, indexOK bool) value.Expr {
 //expr [ expr ]
 //expr [ expr ] [ expr ] ....
 func (p *Parser) index(expr value.Expr) value.Expr {
-	for p.peek().Type == scan.LeftBrack {
+	for p.peek().Type == token.LeftBrack {
 		p.next()
 		index := p.expr(p.next())
 		tok := p.next()
-		if tok.Type != scan.RightBrack {
+		if tok.Type != token.RightBrack {
 			p.errorf("expected right bracket, found %s", tok)
 		}
 		expr = &binary{
@@ -321,21 +381,21 @@ func (p *Parser) index(expr value.Expr) value.Expr {
 //variable
 //'(' Expr ')'
 // If the value is a string, value.Expr is nil.
-func (p *Parser) number(tok scan.Token) (expr value.Expr, str string) {
+func (p *Parser) number(tok token.Token) (expr value.Expr, str string) {
 	var err error
 	text := tok.Text
 	switch tok.Type {
-	case scan.Identifier:
+	case token.Identifier:
 		expr = p.variable(text)
-	case scan.String:
+	case token.String:
 		// TODO
-		str = "<scan.String>"
-	case scan.Number, scan.Rational:
+		str = "<token.String>"
+	case token.Number, token.Rational:
 		expr, err = value.Parse(p.context.Config(), text)
-	case scan.LeftParen:
+	case token.LeftParen:
 		expr = p.expr(p.next())
 		tok := p.next()
-		if tok.Type != scan.RightParen {
+		if tok.Type != token.RightParen {
 			p.errorf("expected right paren, found %s", tok)
 		}
 	}
@@ -350,10 +410,10 @@ func (p *Parser) number(tok scan.Token) (expr value.Expr, str string) {
 //number
 //string
 //numberOrVector...
-func (p *Parser) numberOrVector(tok scan.Token) value.Expr {
+func (p *Parser) numberOrVector(tok token.Token) value.Expr {
 	expr, str := p.number(tok)
 	switch p.peek().Type {
-	case scan.Number, scan.Rational, scan.String, scan.Identifier, scan.LeftParen:
+	case token.Number, token.Rational, token.String, token.Identifier, token.LeftParen:
 		// TODO:
 		// Further vector elements follow.
 		return nil

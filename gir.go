@@ -13,6 +13,7 @@ import (
 	"github.com/bjwbell/gir/exec"
 	"github.com/bjwbell/gir/parse"
 	"github.com/bjwbell/gir/scan"
+	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
 )
 
@@ -67,7 +68,7 @@ func main() {
 	scanner2 := scan.New(context, file, bufio.NewReader(fd2))
 
 	fmt.Println("Tokens: ")
-	for tok := scanner1.Next(); tok.Type != scan.EOF; tok = scanner1.Next() {
+	for tok := scanner1.Next(); tok.Type != token.EOF; tok = scanner1.Next() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
 	parser := parse.NewParser(file, scanner2, context)

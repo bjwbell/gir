@@ -8,54 +8,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/bjwbell/gir/value"
+	"github.com/bjwbell/gir/token"
 )
 
 // Copied from robpike.io/ivy/scan
 
-type Type int
-
-type Token struct {
-	Type Type
-	Line int
-	Text string
-}
-
-//go:generate stringer -type=Type
-
-const (
-	EOF   Type = iota // zero value so closed channel delivers EOF
-	Error             // error occurred; value is text of error
-	Newline
-	// types of tokens
-	Func       // 'func'
-	Assign     // '='
-	Char       // printable ASCII character; grab bag for comma etc.
-	Identifier // alphanumeric identifier
-	Number     // simple number
-	Operator   // known operator
-	Op         // "op", operator keyword
-	Rational   // rational number like 2/3
-	LeftParen  // '('
-	RightParen // ')'
-	LeftBrace  // '{'
-	RightBrace // '}'
-	Semicolon  // ';'
-	LeftBrack  // '['
-	RightBrack // ']'
-	String     // quoted string (includes quotes)
-)
-
-func (i Token) String() string {
-	switch {
-	case i.Type == EOF:
-		return "EOF"
-	case i.Type == Error:
-		return "error: " + i.Text
-	case len(i.Text) > 10:
-		return fmt.Sprintf("%v: %.10q...", i.Type, i.Text)
-	}
-	return fmt.Sprintf("%v: %q", i.Type, i.Text)
-}
 
 const eof = -1
 
@@ -63,7 +20,7 @@ const eof = -1
 type stateFn func(*Scanner) stateFn
 
 type Scanner struct {
-	tokens     chan Token // channel of scanned items
+	tokens     chan token.Token // channel of scanned items
 	context    value.Context
 	r          io.ByteReader
 	done       bool
@@ -81,7 +38,7 @@ type Scanner struct {
 
 // errorf returns an error token and continues to scan.
 func (l *Scanner) errorf(format string, args ...interface{}) stateFn {
-	l.tokens <- Token{Error, l.start, fmt.Sprintf(format, args...)}
+	l.tokens <- token.Token{token.Error, l.start, fmt.Sprintf(format, args...)}
 	return lexAny
 }
 
@@ -91,7 +48,7 @@ func New(context value.Context, name string, r io.ByteReader) *Scanner {
 		r:       r,
 		name:    name,
 		line:    1,
-		tokens:  make(chan Token, 2), // We need a little room to save tokens.
+		tokens:  make(chan token.Token, 2), // We need a little room to save tokens.
 		context: context,
 		state:   lexAny,
 	}
@@ -149,16 +106,16 @@ func (l *Scanner) backup() {
 }
 
 //  passes an item back to the client.
-func (l *Scanner) emit(t Type) {
-	if t == Newline {
+func (l *Scanner) emit(t token.Type) {
+	if t == token.Newline {
 		l.line++
 	}
 	s := l.input[l.start:l.pos]
 	config := l.context.Config()
 	if config.Debug("tokens") {
-		fmt.Fprintf(config.Output(), "%s:%d: emit %s\n", l.name, l.line, Token{t, l.line, s})
+		fmt.Fprintf(config.Output(), "%s:%d: emit %s\n", l.name, l.line, token.Token{t, l.line, s})
 	}
-	l.tokens <- Token{t, l.line, s}
+	l.tokens <- token.Token{t, l.line, s}
 	l.start = l.pos
 	l.width = 0
 }
@@ -196,7 +153,7 @@ func lexComment(l *Scanner) stateFn {
 		l.pos = len(l.input)
 		l.start = l.pos - 1
 		// Emitting newline also advances l.line.
-		l.emit(Newline) // TODO: pass comments up?
+		l.emit(token.Newline) // TODO: pass comments up?
 	}
 	return lexSpace
 }
@@ -217,10 +174,10 @@ func lexAny(l *Scanner) stateFn {
 	case r == eof:
 		return nil
 	case r == '\n': // TODO: \r
-		l.emit(Newline)
+		l.emit(token.Newline)
 		return lexAny
 	case r == ';':
-		l.emit(Semicolon)
+		l.emit(token.Semicolon)
 		return lexAny
 	case r == '#':
 		return lexComment
@@ -240,7 +197,7 @@ func lexAny(l *Scanner) stateFn {
 		return lexNumber
 	case r == '=':
 		if l.peek() != '=' {
-			l.emit(Assign)
+			l.emit(token.Assign)
 			return lexAny
 		}
 		l.next()
@@ -257,19 +214,19 @@ func lexAny(l *Scanner) stateFn {
 	case r == ']':
 		panic("unimplemented")
 	case r == '{':
-		l.emit(LeftBrace)
+		l.emit(token.LeftBrace)
 		return lexAny
 	case r == '}':
-		l.emit(RightBrace)
+		l.emit(token.RightBrace)
 		return lexAny
 	case r == '(':
-		l.emit(LeftParen)
+		l.emit(token.LeftParen)
 		return lexAny
 	case r == ')':
-		l.emit(RightParen)
+		l.emit(token.RightParen)
 		return lexAny
 	case r <= unicode.MaxASCII && unicode.IsPrint(r):
-		l.emit(Char)
+		l.emit(token.Char)
 		return lexAny
 	default:
 		return l.errorf("unrecognized character: %#U", r)
@@ -291,7 +248,7 @@ Loop:
 			break Loop
 		}
 	}
-	l.emit(Identifier)
+	l.emit(token.Identifier)
 	return lexAny
 }
 
@@ -336,7 +293,7 @@ func lexOperator(l *Scanner) stateFn {
 			l.next()               // Accept the '.'.
 			if isDigit(l.peek()) { // Is a number after all, as in 3*.7. Back up.
 				l.backup()
-				l.emit(Operator) // Up to but not including the period.
+				l.emit(token.Operator) // Up to but not including the period.
 				return lexNumber // We know it starts ".7".
 			}
 			startRight := l.pos
@@ -357,9 +314,9 @@ func lexOperator(l *Scanner) stateFn {
 		}
 	}
 	if isIdentifier(l.input[l.start:l.pos]) {
-		l.emit(Identifier)
+		l.emit(token.Identifier)
 	} else {
-		l.emit(Operator)
+		l.emit(token.Operator)
 	}
 	return lexSpace
 }
@@ -381,7 +338,7 @@ func (l *Scanner) atTerminator() bool {
 }
 
 // Next returns the next token.
-func (l *Scanner) Next() Token {
+func (l *Scanner) Next() token.Token {
 	// The lexer is concurrent but we don't want it to run in parallel
 	// with the rest of the interpreter, so we only run the state machine
 	// when we need a token.
@@ -398,7 +355,7 @@ func (l *Scanner) Next() Token {
 		close(l.tokens)
 		l.tokens = nil
 	}
-	return Token{EOF, l.pos, "EOF"}
+	return token.Token{token.EOF, l.pos, "EOF"}
 }
 
 // lexNumber scans a number: decimal, octal, hex, float, or imaginary. This
@@ -422,7 +379,7 @@ func lexNumber(l *Scanner) stateFn {
 		return l.errorf("bad number syntax: %s", l.input[l.start:l.pos])
 	}
 	if l.peek() != '/' {
-		l.emit(Number)
+		l.emit(token.Number)
 		return lexAny
 	}
 	// Might be a rational.
@@ -435,7 +392,7 @@ func lexNumber(l *Scanner) stateFn {
 	if !l.scanNumber() {
 		return l.errorf("bad number syntax: %s", l.input[l.start:l.pos])
 	}
-	l.emit(Rational)
+	l.emit(token.Rational)
 	return lexAny
 }
 
@@ -512,7 +469,7 @@ Loop:
 			break Loop
 		}
 	}
-	l.emit(String)
+	l.emit(token.String)
 	return lexAny
 }
 
@@ -532,7 +489,7 @@ Loop:
 			break Loop
 		}
 	}
-	l.emit(String)
+	l.emit(token.String)
 	return lexAny
 }
 
@@ -547,7 +504,7 @@ Loop:
 			break Loop
 		}
 	}
-	l.emit(String)
+	l.emit(token.String)
 	return lexAny
 }
 
