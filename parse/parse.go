@@ -255,7 +255,7 @@ func (p *Parser) expr(tok scan.Token) value.Expr {
 	case scan.Identifier:
 		// TODO
 		return nil
-	case scan.Assign:
+	case scan.Operator, scan.Assign:
 		p.next()
 		return &binary{
 			left:  expr,

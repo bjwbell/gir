@@ -32,6 +32,7 @@ const (
 	Char       // printable ASCII character; grab bag for comma etc.
 	Identifier // alphanumeric identifier
 	Number     // simple number
+	Operator   // known operator
 	Op         // "op", operator keyword
 	Rational   // rational number like 2/3
 	LeftParen  // '('
@@ -244,6 +245,10 @@ func lexAny(l *Scanner) stateFn {
 		}
 		l.next()
 		fallthrough // for ==
+	case l.isOperator(r):
+		// Must be after after = so == is an operator,
+		// and after numbers, so '-' can be a sign.
+		return lexOperator
 	case isAlphaNumeric(r):
 		l.backup()
 		return lexIdentifier
@@ -288,6 +293,75 @@ Loop:
 	}
 	l.emit(Identifier)
 	return lexAny
+}
+
+// IsBinary identifies the binary operators; these can be used in reductions.
+var IsBinary = map[string]bool{
+	"!=":     true,
+	"&":      true,
+	"*":      true,
+	"**":     true,
+	"+":      true,
+	",":      true, // Silly but not wrong.
+	"-":      true,
+	"/":      true,
+	"<":      true,
+	"<<":     true,
+	"<=":     true,
+	"==":     true,
+	">":      true,
+	">=":     true,
+	">>":     true,
+	"[]":     true,
+	"^":      true,
+	"|":      true,
+}
+
+
+// lexOperator completes scanning an operator. We have already accepted the + or
+// whatever; there may be a reduction or inner or outer product.
+func lexOperator(l *Scanner) stateFn {
+	// It might be an inner product or reduction, but only if it is a binary operator.
+	word := l.input[l.start:l.pos]
+	if word == "o" || IsBinary[word] {
+		switch l.peek() {
+		case '/':
+			// Reduction.
+			l.next()
+		case '\\':
+			// Scan.
+			l.next()
+		case '.':
+			// Inner or outer product?
+			l.next()               // Accept the '.'.
+			if isDigit(l.peek()) { // Is a number after all, as in 3*.7. Back up.
+				l.backup()
+				l.emit(Operator) // Up to but not including the period.
+				return lexNumber // We know it starts ".7".
+			}
+			startRight := l.pos
+			r := l.next()
+			switch {
+			case l.isOperator(r):
+			case isAlphaNumeric(r):
+				for isAlphaNumeric(r) {
+					r = l.next()
+				}
+				l.backup()
+				if !l.atTerminator() {
+					return l.errorf("bad character %#U", r)
+				}
+				word := l.input[startRight:l.pos]
+				return l.errorf("%s not an operator", word)
+			}
+		}
+	}
+	if isIdentifier(l.input[l.start:l.pos]) {
+		l.emit(Identifier)
+	} else {
+		l.emit(Operator)
+	}
+	return lexSpace
 }
 
 // atTerminator reports whether the input is at valid termination character to
@@ -551,6 +625,43 @@ func isAllDigits(s string, base int) bool {
 		if 'A' <= c && c <= TOP {
 			continue
 		}
+		return false
+	}
+	return true
+}
+
+// isOperator reports whether r is an operator. It may advance the lexer one character
+// if it is a two-character operator.
+func (l *Scanner) isOperator(r rune) bool {
+	switch r {
+	case '?', '+', '-', '/', '%', '&', '|', '^', ',':
+		// No follow-on possible.
+	case '!':
+		if l.peek() != '=' {
+			return false
+		}
+		l.next()
+	case '>':
+		switch l.peek() {
+		case '>', '=':
+			l.next()
+		}
+	case '<':
+		switch l.peek() {
+		case '<', '=':
+			l.next()
+		}
+	case '*':
+		switch l.peek() {
+		case '*':
+			l.next()
+		}
+	case '=':
+		if l.peek() != '=' {
+			return false
+		}
+		l.next()
+	default:
 		return false
 	}
 	return true
