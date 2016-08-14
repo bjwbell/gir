@@ -4,9 +4,9 @@ package token
 
 import "fmt"
 
-const _Type_name = "EOFErrorNewlineFuncAssignCharIdentifierNumberOperatorOpRationalLeftParenRightParenLeftBraceRightBraceSemicolonLeftBrackRightBrackString"
+const _Type_name = "EOFErrorNewlineAssignCharIdentifierNumberOperatorOpRationalLeftParenRightParenLeftBraceRightBraceSemicolonLeftBrackRightBrackStringFUNCPACKAGE"
 
-var _Type_index = [...]uint8{0, 3, 8, 15, 19, 25, 29, 39, 45, 53, 55, 63, 72, 82, 91, 101, 110, 119, 129, 135}
+var _Type_index = [...]uint8{0, 3, 8, 15, 21, 25, 35, 41, 49, 51, 59, 68, 78, 87, 97, 106, 115, 125, 131, 135, 142}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

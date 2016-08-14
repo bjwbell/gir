@@ -1,1 +1,2 @@
+package test3
 func 6 * (2 + 4)

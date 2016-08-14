@@ -250,11 +250,14 @@ Loop:
 	lit := l.input[l.start:l.pos]
 	if l.IsKeyword(lit) {
 		if l.IsFunc(lit) {
-			l.emit(token.Func)
+			l.emit(token.FUNC)
+		} else if l.IsPackage(lit) {
+			l.emit(token.PACKAGE)
 		} else {
 			return l.errorf("unrecognized keyword %v", lit)
 		}
 	} else {
+		l.emit(token.Identifier)
 	}
 	
 	return lexAny
@@ -263,12 +266,21 @@ Loop:
 func (l *Scanner) IsKeyword(lit string) bool {
 	if lit == "func" {
 		return true
+	} else if lit == "package" {
+		return true
 	}
 	return false
 }
 
 func (l *Scanner) IsFunc(lit string) bool {
 	if lit == "func" {
+		return true
+	}
+	return false
+}
+
+func (l *Scanner) IsPackage(lit string) bool {
+	if lit == "package" {
 		return true
 	}
 	return false

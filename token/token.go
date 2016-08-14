@@ -21,7 +21,6 @@ const (
 	Error             // error occurred; value is text of error
 	Newline
 	// types of tokens
-	Func       // 'func'
 	Assign     // '='
 	Char       // printable ASCII character; grab bag for comma etc.
 	Identifier // alphanumeric identifier
@@ -37,6 +36,10 @@ const (
 	LeftBrack  // '['
 	RightBrack // ']'
 	String     // quoted string (includes quotes)
+
+	// Literal tokens
+	FUNC       // 'func'
+	PACKAGE    // 'package'
 )
 
 func (i Token) String() string {

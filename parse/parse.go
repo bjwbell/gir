@@ -182,20 +182,44 @@ func (p *Parser) error(msg string) {
 	panic(msg)
 }
 
+func (p *Parser) expectTok(t token.Type) (bool, token.Token) {
+	tok := p.next() // make progress
+	if tok.Type == t {
+		return true, tok
+	} else {
+		return false, tok
+	}
+}
 
-func (p *Parser) expect(tokType token.Type) bool {
+
+func (p *Parser) expect(tok token.Token) (bool, token.Token) {
 	t := p.next() // make progress
 	
-	if tokType == t.Type {
-		return true
+	if tok.Type == t.Type && tok.Text == t.Text {
+		return true, t
 	} else {
-		return false
+		return false, t
+	}
+}
+
+func (p *Parser) absorbWhitespace() {
+	for ;  p.peek().Type == token.Newline; p.next() {
 	}
 }
 
 func (p *Parser) ParseFile() ([]value.Expr, bool) {
-	if !p.expect(token.Func) {
-		p.error("expected func keyword")
+	pos_valid, _ := p.expect(token.Token{token.PACKAGE, 0, "package"})
+	if !pos_valid {
+		p.error("expected package keyword")
+		return nil, false
+	}
+	ident := p.parseIdent()
+	if ident.Text == "_" {
+		p.error("invalid package name _")
+	}
+	p.absorbWhitespace()
+	if func_valid, _ := p.expect(token.Token{token.FUNC, 0, "func"}); !func_valid {
+		p.error(fmt.Sprintf("expected func keyword, got %v", p.peek()))
 	}
 	return p.Line()
 // 	// package clause
@@ -256,6 +280,19 @@ func (p *Parser) ParseFile() ([]value.Expr, bool) {
 // 	}
 // }
 }
+
+
+func (p *Parser) parseIdent() *token.Token {
+	name := "_"
+	if p.peek().Type == token.Identifier {
+		name = p.peek().Text
+		p.next()
+	} else {
+		p.expectTok(token.Identifier) // use expect() error handling
+	}
+	return &token.Token{token.Identifier, 0, name}
+}
+
 
 // Line reads a line of input and returns the values it evaluates.
 // A nil returned slice means there were no values.
