@@ -1,2 +1,5 @@
 package test3
-func t3 6 * (2 + 4)
+
+func t3() {
+     6 * (2 + 4)
+}

@@ -19,7 +19,7 @@ func Tree(e interface{}) string {
 	case []ast.FuncDecl:
 		s := ""
 		for _, fn := range e {
-			s +=fmt.Sprintf("func %s\n %s\n", fn.Name, Tree(fn.Epxrs))
+			s +=fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Epxrs))
 		}
 		return s
 	case value.Int:
@@ -258,12 +258,34 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 	if !ok {
 		p.error(fmt.Sprintf("expected identifier after 'func', got %v", p.peek()))
 	}
+
+	_, ok = p.expectTok(token.LeftParen)
+	if !ok {
+		p.error(fmt.Sprintf("expected '(' after func identifier, got %v", p.peek()))
+	}
+
+	_, ok = p.expectTok(token.RightParen)
+	if !ok {
+		p.error(fmt.Sprintf("expected ')' after func identifier, got %v", p.peek()))
+	}
+	p.absorbWhitespace()
+	_, ok = p.expectTok(token.LeftBrace)
+	if !ok {
+		p.error(fmt.Sprintf("expected '{' after func identifier, got %v", p.peek()))
+	}
+
+	p.absorbWhitespace()
 	var decl ast.FuncDecl
 	exprs, ok := p.Line()
 	decl.Epxrs = exprs
 	decl.Name = fnIdent.Text
 	if !ok {
 		p.error("Error in p.Line()")
+	}
+	p.absorbWhitespace()
+	_, ok = p.expectTok(token.RightBrace)
+	if !ok {
+		p.error(fmt.Sprintf("expected '}' after func body, got %v", p.peek()))
 	}
 	return &decl
 }

@@ -1,2 +1,5 @@
 package test1
-func t1 1
+
+func t1() {
+     1
+}
