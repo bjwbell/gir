@@ -247,8 +247,31 @@ Loop:
 			break Loop
 		}
 	}
-	l.emit(token.Identifier)
+	lit := l.input[l.start:l.pos]
+	if l.IsKeyword(lit) {
+		if l.IsFunc(lit) {
+			l.emit(token.Func)
+		} else {
+			return l.errorf("unrecognized keyword %v", lit)
+		}
+	} else {
+	}
+	
 	return lexAny
+}
+
+func (l *Scanner) IsKeyword(lit string) bool {
+	if lit == "func" {
+		return true
+	}
+	return false
+}
+
+func (l *Scanner) IsFunc(lit string) bool {
+	if lit == "func" {
+		return true
+	}
+	return false
 }
 
 // IsBinary identifies the binary operators; these can be used in reductions.

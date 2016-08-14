@@ -175,7 +175,29 @@ func (p *Parser) peek() token.Token {
 	return p.peekTok
 }
 
-// func (p *Parse) ParseFile() ([]value.Expr, bool) {
+
+
+func (p *Parser) error(msg string) {
+	// TODO: Improve
+	panic(msg)
+}
+
+
+func (p *Parser) expect(tokType token.Type) bool {
+	t := p.next() // make progress
+	
+	if tokType == t.Type {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (p *Parser) ParseFile() ([]value.Expr, bool) {
+	if !p.expect(token.Func) {
+		p.error("expected func keyword")
+	}
+	return p.Line()
 // 	// package clause
 // 	pos := p.expect(token.PACKAGE)
 // 	// GIR spec: The package clause is not a declaration;
@@ -233,6 +255,7 @@ func (p *Parser) peek() token.Token {
 // 		Comments:   p.comments,
 // 	}
 // }
+}
 
 // Line reads a line of input and returns the values it evaluates.
 // A nil returned slice means there were no values.
