@@ -13,7 +13,6 @@ import (
 
 // Copied from robpike.io/ivy/scan
 
-
 const eof = -1
 
 // stateFn represents the state of the scanner as a function that returns the next state.

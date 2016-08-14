@@ -1,5 +1,7 @@
 package token
 
+// Copied from robpike.io/ivy/scan
+
 import (
 	"fmt"
 )
