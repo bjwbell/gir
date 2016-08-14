@@ -191,12 +191,12 @@ func (p *Parser) error(msg string) {
 	panic(msg)
 }
 
-func (p *Parser) expectTok(t token.Type) (bool, token.Token) {
+func (p *Parser) expectTok(t token.Type) (token.Token, bool) {
 	tok := p.next() // make progress
 	if tok.Type == t {
-		return true, tok
+		return tok, true
 	} else {
-		return false, tok
+		return tok, false
 	}
 }
 
@@ -254,10 +254,14 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 	if func_valid, _ := p.expect(token.Token{token.FUNC, 0, "func"}); !func_valid {
 		p.error(fmt.Sprintf("expected func keyword, got %v", p.peek()))
 	}
+	fnIdent, ok := p.expectTok(token.Identifier)
+	if !ok {
+		p.error(fmt.Sprintf("expected identifier after 'func', got %v", p.peek()))
+	}
 	var decl ast.FuncDecl
 	exprs, ok := p.Line()
 	decl.Epxrs = exprs
-	decl.Name = "_"
+	decl.Name = fnIdent.Text
 	if !ok {
 		p.error("Error in p.Line()")
 	}
