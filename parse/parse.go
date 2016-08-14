@@ -5,6 +5,7 @@ package parse
 import (
 	"fmt"
 
+	"github.com/bjwbell/gir/ast"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
@@ -13,6 +14,14 @@ import (
 // tree formats an expression in an unambiguous form for debugging.
 func Tree(e interface{}) string {
 	switch e := e.(type) {
+	case *ast.File:
+		return fmt.Sprintf("(package %s %s)", e.Name, Tree(e.Decls))
+	case []ast.FuncDecl:
+		s := ""
+		for _, fn := range e {
+			s +=fmt.Sprintf("func %s\n %s\n", fn.Name, Tree(fn.Epxrs))
+		}
+		return s
 	case value.Int:
 		return fmt.Sprintf("<int %s>", e)
 	case variableExpr:
@@ -207,78 +216,25 @@ func (p *Parser) absorbWhitespace() {
 	}
 }
 
-func (p *Parser) ParseFile() ([]value.Expr, bool) {
+func (p *Parser) ParseFile() (*ast.File) {
 	pos_valid, _ := p.expect(token.Token{token.PACKAGE, 0, "package"})
 	if !pos_valid {
 		p.error("expected package keyword")
-		return nil, false
+		return nil
 	}
 	ident := p.parseIdent()
 	if ident.Text == "_" {
 		p.error("invalid package name _")
 	}
-	p.absorbWhitespace()
-	if func_valid, _ := p.expect(token.Token{token.FUNC, 0, "func"}); !func_valid {
-		p.error(fmt.Sprintf("expected func keyword, got %v", p.peek()))
+	var decls []ast.FuncDecl
+	for p.peek().Type != token.EOF {
+		decls = append(decls, *p.parseFuncDecl())
 	}
-	return p.Line()
-// 	// package clause
-// 	pos := p.expect(token.PACKAGE)
-// 	// GIR spec: The package clause is not a declaration;
-// 	// the package name does not appear in any scope.
-// 	ident := p.parseIdent()
-// 	if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
-// 		p.error(p.pos, "invalid package name _")
-// 	}
-// 	p.expectSemi()
 
-// 	// Don't bother parsing the rest if we had errors parsing the package clause.
-// 	// Likely not a Go source file at all.
-// 	if p.errors.Len() != 0 {
-// 		return nil
-// 	}
-
-// 	p.openScope()
-// 	p.pkgScope = p.topScope
-// 	var decls []ast.Decl
-// 	if p.mode&PackageClauseOnly == 0 {
-// 		// import decls
-// 		for p.tok == token.IMPORT {
-// 			decls = append(decls, p.parseGenDecl(token.IMPORT, p.parseImportSpec))
-// 		}
-
-// 		if p.mode&ImportsOnly == 0 {
-// 			// rest of package body
-// 			for p.tok != token.EOF {
-// 				decls = append(decls, p.parseDecl(syncDecl))
-// 			}
-// 		}
-// 	}
-// 	p.closeScope()
-
-// 	// resolve global identifiers within the same file
-// 	i := 0
-// 	for _, ident := range p.unresolved {
-// 		// i <= index for current ident
-// 		assert(ident.Obj == unresolved, "object already resolved")
-// 		ident.Obj = p.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
-// 		if ident.Obj == nil {
-// 			p.unresolved[i] = ident
-// 			i++
-// 		}
-// 	}
-
-// 	return &ast.File{
-// 		Doc:        doc,
-// 		Package:    pos,
-// 		Name:       ident,
-// 		Decls:      decls,
-// 		Scope:      p.pkgScope,
-// 		Imports:    p.imports,
-// 		Unresolved: p.unresolved[0:i],
-// 		Comments:   p.comments,
-// 	}
-// }
+	return &ast.File{
+		Name:       ident.Text,
+		Decls:      decls,
+	}
 }
 
 
@@ -286,13 +242,27 @@ func (p *Parser) parseIdent() *token.Token {
 	name := "_"
 	if p.peek().Type == token.Identifier {
 		name = p.peek().Text
-		p.next()
-	} else {
+		p.next()	} else {
 		p.expectTok(token.Identifier) // use expect() error handling
 	}
 	return &token.Token{token.Identifier, 0, name}
 }
 
+
+func (p *Parser) parseFuncDecl() *ast.FuncDecl {
+	p.absorbWhitespace()
+	if func_valid, _ := p.expect(token.Token{token.FUNC, 0, "func"}); !func_valid {
+		p.error(fmt.Sprintf("expected func keyword, got %v", p.peek()))
+	}
+	var decl ast.FuncDecl
+	exprs, ok := p.Line()
+	decl.Epxrs = exprs
+	decl.Name = "_"
+	if !ok {
+		p.error("Error in p.Line()")
+	}
+	return &decl
+}
 
 // Line reads a line of input and returns the values it evaluates.
 // A nil returned slice means there were no values.

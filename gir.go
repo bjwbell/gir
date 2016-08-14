@@ -72,6 +72,6 @@ func main() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
 	parser := parse.NewParser(file, scanner2, context)
-	exprs, ok := parser.ParseFile()
-	fmt.Println("tree(exprs): ", parse.Tree(exprs), ", ok: ", ok)
+	declFile := parser.ParseFile()
+	fmt.Println("tree(exprs): ", parse.Tree(declFile))
 }
