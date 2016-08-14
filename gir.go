@@ -72,6 +72,5 @@ func main() {
 	}
 	parser := parse.NewParser(file, scanner2, context)
 	exprs, ok := parser.Line()
-	fmt.Println("exprs: ", exprs, ", ok: ", ok)
-	fmt.Printf("parser: %#v\n", parser)
+	fmt.Println("tree(exprs): ", parse.Tree(exprs), ", ok: ", ok)
 }

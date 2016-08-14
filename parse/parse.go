@@ -10,31 +10,33 @@ import (
 )
 
 // tree formats an expression in an unambiguous form for debugging.
-func tree(e interface{}) string {
+func Tree(e interface{}) string {
 	switch e := e.(type) {
+	case value.Int:
+		return fmt.Sprintf("<int %s>", e)
 	case variableExpr:
 		return fmt.Sprintf("<var %s>", e.name)
 	case *unary:
-		return fmt.Sprintf("(%s %s)", e.op, tree(e.right))
+		return fmt.Sprintf("(%s %s)", e.op, Tree(e.right))
 	case *binary:
 		// Special case for [].
 		if e.op == "[]" {
-			return fmt.Sprintf("(%s[%s])", tree(e.left), tree(e.right))
+			return fmt.Sprintf("(%s[%s])", Tree(e.left), Tree(e.right))
 		}
-		return fmt.Sprintf("(%s %s %s)", tree(e.left), e.op, tree(e.right))
+		return fmt.Sprintf("(%s %s %s)", Tree(e.left), e.op, Tree(e.right))
 	case sliceExpr:
 		s := "<TODO>"
 		return s
 	case []value.Expr:
 		if len(e) == 1 {
-			return tree(e[0])
+			return Tree(e[0])
 		}
 		s := "<"
 		for i, expr := range e {
 			if i > 0 {
 				s += "; "
 			}
-			s += tree(expr)
+			s += Tree(expr)
 		}
 		s += ">"
 		return s
@@ -216,7 +218,7 @@ func (p *Parser) expressionList() ([]value.Expr, bool) {
 		p.errorf("unexpected %s", tok)
 	}
 	if len(exprs) > 0 && p.context.Config().Debug("parse") {
-		p.Println(tree(exprs))
+		p.Println(Tree(exprs))
 	}
 	return exprs, ok
 }
