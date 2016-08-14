@@ -253,6 +253,8 @@ Loop:
 			l.emit(token.FUNC)
 		} else if l.IsPackage(lit) {
 			l.emit(token.PACKAGE)
+		} else if l.IsRet(lit) {
+			l.emit(token.RET)
 		} else {
 			return l.errorf("unrecognized keyword %v", lit)
 		}
@@ -268,7 +270,10 @@ func (l *Scanner) IsKeyword(lit string) bool {
 		return true
 	} else if lit == "package" {
 		return true
+	} else if lit == "ret" {
+		return true
 	}
+	
 	return false
 }
 
@@ -281,6 +286,13 @@ func (l *Scanner) IsFunc(lit string) bool {
 
 func (l *Scanner) IsPackage(lit string) bool {
 	if lit == "package" {
+		return true
+	}
+	return false
+}
+
+func (l *Scanner) IsRet(lit string) bool {
+	if lit == "ret" {
 		return true
 	}
 	return false

@@ -1,0 +1,4 @@
+package test4
+func test1() {
+     ret
+}

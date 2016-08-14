@@ -40,6 +40,7 @@ const (
 	// Literal tokens
 	FUNC       // 'func'
 	PACKAGE    // 'package'
+	RET        // 'ret'
 )
 
 func (i Token) String() string {

@@ -19,9 +19,13 @@ func Tree(e interface{}) string {
 	case []ast.FuncDecl:
 		s := ""
 		for _, fn := range e {
-			s +=fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Epxrs))
+			s +=fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Body))
 		}
 		return s
+	case *ast.RetStmt:
+		return fmt.Sprintf("ret")
+	case *ast.ExprStmt:
+		return fmt.Sprintf("%s", Tree(e.Exprs))
 	case value.Int:
 		return fmt.Sprintf("<int %s>", e)
 	case variableExpr:
@@ -276,8 +280,9 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 
 	p.absorbWhitespace()
 	var decl ast.FuncDecl
-	exprs, ok := p.Line()
-	decl.Epxrs = exprs
+	body, ok := p.parseStmt()
+	
+	decl.Body = body
 	decl.Name = fnIdent.Text
 	if !ok {
 		p.error("Error in p.Line()")
@@ -288,6 +293,26 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 		p.error(fmt.Sprintf("expected '}' after func body, got %v", p.peek()))
 	}
 	return &decl
+}
+
+func (p *Parser) parseStmt() (s ast.Stmt, ok bool) {
+	t := p.peek()
+	switch t.Type {
+	case token.RET:
+		t = p.next()
+		s = &ast.RetStmt{}
+		return s, true
+	default:
+		exprs, ok := p.Line()
+		// no statement found
+		if !ok {
+			p.error("expected statement")
+			return nil, false
+		}
+		return &ast.ExprStmt{exprs}, true
+	}
+
+	return nil, false
 }
 
 // Line reads a line of input and returns the values it evaluates.
@@ -357,6 +382,7 @@ func (p *Parser) statementList(tok token.Token) ([]value.Expr, bool) {
 	}
 	return exprs, true
 }
+
 
 // expr
 //operand
