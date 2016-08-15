@@ -5,7 +5,7 @@ package parse
 import (
 	"fmt"
 
-	"github.com/bjwbell/gir/ast"
+	"github.com/bjwbell/gir/gst"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
@@ -14,17 +14,17 @@ import (
 // tree formats an expression in an unambiguous form for debugging.
 func Tree(e interface{}) string {
 	switch e := e.(type) {
-	case *ast.File:
+	case *gst.File:
 		return fmt.Sprintf("(package %s %s)", e.Name, Tree(e.Decls))
-	case []ast.FuncDecl:
+	case []gst.FuncDecl:
 		s := ""
 		for _, fn := range e {
 			s +=fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Body))
 		}
 		return s
-	case *ast.RetStmt:
+	case *gst.RetStmt:
 		return fmt.Sprintf("ret")
-	case *ast.ExprStmt:
+	case *gst.ExprStmt:
 		return fmt.Sprintf("%s", Tree(e.Exprs))
 	case value.Int:
 		return fmt.Sprintf("<int %s>", e)
@@ -220,7 +220,7 @@ func (p *Parser) absorbWhitespace() {
 	}
 }
 
-func (p *Parser) ParseFile() (*ast.File) {
+func (p *Parser) ParseFile() (*gst.File) {
 	pos_valid, _ := p.expect(token.Token{token.PACKAGE, 0, "package"})
 	if !pos_valid {
 		p.error("expected package keyword")
@@ -230,12 +230,12 @@ func (p *Parser) ParseFile() (*ast.File) {
 	if ident.Text == "_" {
 		p.error("invalid package name _")
 	}
-	var decls []ast.FuncDecl
+	var decls []gst.FuncDecl
 	for p.peek().Type != token.EOF {
 		decls = append(decls, *p.parseFuncDecl())
 	}
 
-	return &ast.File{
+	return &gst.File{
 		Name:       ident.Text,
 		Decls:      decls,
 	}
@@ -253,7 +253,7 @@ func (p *Parser) parseIdent() *token.Token {
 }
 
 
-func (p *Parser) parseFuncDecl() *ast.FuncDecl {
+func (p *Parser) parseFuncDecl() *gst.FuncDecl {
 	p.absorbWhitespace()
 	if func_valid, _ := p.expect(token.Token{token.FUNC, 0, "func"}); !func_valid {
 		p.error(fmt.Sprintf("expected func keyword, got %v", p.peek()))
@@ -279,7 +279,7 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 	}
 
 	p.absorbWhitespace()
-	var decl ast.FuncDecl
+	var decl gst.FuncDecl
 	body, ok := p.parseStmt()
 	
 	decl.Body = body
@@ -295,12 +295,12 @@ func (p *Parser) parseFuncDecl() *ast.FuncDecl {
 	return &decl
 }
 
-func (p *Parser) parseStmt() (s ast.Stmt, ok bool) {
+func (p *Parser) parseStmt() (s gst.Stmt, ok bool) {
 	t := p.peek()
 	switch t.Type {
 	case token.RET:
 		t = p.next()
-		s = &ast.RetStmt{}
+		s = &gst.RetStmt{}
 		return s, true
 	default:
 		exprs, ok := p.Line()
@@ -309,7 +309,7 @@ func (p *Parser) parseStmt() (s ast.Stmt, ok bool) {
 			p.error("expected statement")
 			return nil, false
 		}
-		return &ast.ExprStmt{exprs}, true
+		return &gst.ExprStmt{exprs}, true
 	}
 
 	return nil, false

@@ -1,4 +1,4 @@
-package ast
+package gst
 
 import (
 	"github.com/bjwbell/gir/value"

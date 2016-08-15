@@ -1,4 +1,4 @@
-package ast
+package gst
 
 type File struct {
 	Name string
