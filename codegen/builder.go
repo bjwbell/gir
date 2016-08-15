@@ -3,68 +3,21 @@ package codegen
 import (
 	"fmt"
 	"go/ast"
-	"go/importer"
-	"go/parser"
 	"go/token"
 	"go/types"
 
 	"github.com/bjwbell/cmd/obj"
 	"github.com/bjwbell/ssa"
+	"github.com/bjwbell/gir/gst"
+	"github.com/bjwbell/gir/gimporter"
+	"github.com/bjwbell/gir/gtypes"
 )
 
-func TypeCheckFn(file, pkgName, fn string, log bool) (fileTok *token.File, fileAst *ast.File, fnDecl *ast.FuncDecl, function *types.Func, info *types.Info, er error) {
-	var conf types.Config
-	conf.Importer = importer.Default()
-	fset := token.NewFileSet()
-	fileAst, err := parser.ParseFile(fset, file, nil, parser.AllErrors)
-	var terrors string
-	if err != nil {
-		fmt.Printf("Error parsing %v, error message: %v\n", file, err)
-		terrors += fmt.Sprintf("err: %v\n", err)
-		er = err
-		return
-	}
-	fileTok = fset.File(fileAst.Pos())
-	files := []*ast.File{fileAst}
-	info = &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-		Defs:  make(map[*ast.Ident]types.Object),
-		Uses:  make(map[*ast.Ident]types.Object),
-	}
-	pkg, err := conf.Check(pkgName, fset, files, info)
-	if err != nil {
-		if terrors != fmt.Sprintf("err: %v\n", err) {
-			fmt.Printf("Type error (%v) message: %v\n", file, err)
-			er = err
-			return
-		}
-	}
-	fmt.Println("pkg: ", pkg)
-	fmt.Println("pkg.Complete:", pkg.Complete())
-	scope := pkg.Scope()
-	obj := scope.Lookup(fn)
-	if obj == nil {
-		fmt.Println("Couldnt lookup function: ", fn)
-		er = fmt.Errorf("Couldnt lookup function: %v", fn)
-		return
-	}
-	function, ok := obj.(*types.Func)
+func TypeCheckFn(fnDecl *gst.FuncDecl, log bool) (function *gtypes.Func, er error) {
+	function, ok := gimporter.ParseFuncDecl(fnDecl)
 	if !ok {
-		fmt.Printf("%v is a %v, not a function\n", fn, obj.Type().String())
-		er = fmt.Errorf("%v is a %v, not a function\n", fn, obj.Type().String())
-		return
-	}
-	for _, decl := range fileAst.Decls {
-		if fdecl, ok := decl.(*ast.FuncDecl); ok {
-			if fdecl.Name.Name == fn {
-				fnDecl = fdecl
-				break
-			}
-		}
-	}
-	if fnDecl == nil {
-		fmt.Println("couldn't find function: ", fn)
-		er = fmt.Errorf("couldn't find function: %v", fn)
+		fmt.Printf("Error importing %v\n", fnDecl.Name)
+		er = fmt.Errorf("Error importing %v\n", fnDecl.Name)
 		return
 	}
 	return
@@ -72,12 +25,12 @@ func TypeCheckFn(file, pkgName, fn string, log bool) (fileTok *token.File, fileA
 
 // BuildSSA parses the function, fn, which must be in ssa form and returns
 // the corresponding ssa.Func
-func BuildSSA(file, pkgName, fn string, log bool) (ssafn *ssa.Func, usessa bool) {
-	fileTok, fileAst, fnDecl, function, info, err := TypeCheckFn(file, pkgName, fn, log)
+func BuildSSA(fnDecl *gst.FuncDecl, pkgName string, log bool) (ssafn *ssa.Func, usessa bool) {
+	function, err := TypeCheckFn(fnDecl, log)
 	if err != nil {
-		return nil, false
+	 	return nil, false
 	}
-	ssafn, ok := buildSSA(fileTok, fileAst, fnDecl, function, info, log)
+	ssafn, ok := buildSSA(fnDecl, function, log)
 	return ssafn, ok
 }
 
@@ -179,20 +132,17 @@ func getVars(ctx Ctx, fnDecl *ast.FuncDecl, fnType *types.Func) []ssaVar {
 	return vars
 }
 
-func buildSSA(ftok *token.File, f *ast.File, fn *ast.FuncDecl, fnType *types.Func, fnInfo *types.Info, log bool) (ssafn *ssa.Func, ok bool) {
+func buildSSA(fn *gst.FuncDecl, fnType *gtypes.Func, log bool) (ssafn *ssa.Func, ok bool) {
 
 	// HACK, hardcoded
 	arch := "amd64"
 
-	signature, ok := fnType.Type().(*types.Signature)
-	if !ok {
-		panic("function type is not types.Signature")
-	}
-	if signature.Recv() != nil {
-		fmt.Println("Methods not supported")
+	signature := fnType.Typ
+	if signature == nil || signature.Results == nil {
 		return nil, false
 	}
-	if signature.Results().Len() > 1 {
+	
+	if len(*signature.Results) > 1 {
 		fmt.Println("Multiple return values not supported")
 	}
 
@@ -200,16 +150,16 @@ func buildSSA(ftok *token.File, f *ast.File, fn *ast.FuncDecl, fnType *types.Fun
 	var s state
 	e.log = log
 	link := obj.Link{}
-	s.ctx = Ctx{ftok, fnInfo}
-	s.fnDecl = fn
-	s.fnType = fnType
-	s.fnInfo = fnInfo
+	s.ctx = Ctx{nil, nil} //Ctx{ftok, fnInfo}
+	s.fnDecl = nil
+	s.fnType = nil
+	s.fnInfo = nil
 	s.config = ssa.NewConfig(arch, &e, &link, false)
 	s.f = s.config.NewFunc()
-	s.f.Name = fnType.Name()
+	s.f.Name = fnType.Name
 	//s.f.Entry = s.f.NewBlock(ssa.BlockPlain)
 
-	s.scanBlocks(fn.Body)
+	//s.scanBlocks(fn.Body)
 	if len(s.blocks) < 1 {
 		panic("no blocks found, need at least one block per function")
 	}
@@ -232,7 +182,7 @@ func buildSSA(ftok *token.File, f *ast.File, fn *ast.FuncDecl, fnType *types.Fun
 
 	// Generate addresses of local declarations
 	s.decladdrs = map[ssaVar]*ssa.Value{}
-	vars := getVars(s.ctx, fn, fnType)
+	vars := []ssaVar{} //getVars(s.ctx, fn, fnType)
 	for _, v := range vars {
 		switch v.Class() {
 		case PPARAM:
@@ -258,7 +208,8 @@ func buildSSA(ftok *token.File, f *ast.File, fn *ast.FuncDecl, fnType *types.Fun
 		}
 	}
 
-	fpVar := types.NewVar(0, fnType.Pkg(), ".fp", Typ[types.Int32].Type)
+	//fpVar := types.NewVar(0, fnType.Pkg(), ".fp", Typ[types.Int32].Type)
+	fpVar := types.NewVar(0, nil, ".fp", Typ[types.Int32].Type)
 	nodfp := &ssaParam{v: fpVar, ctx: s.ctx}
 
 	// nodfp is a special argument which is the function's FP.
@@ -270,7 +221,7 @@ func buildSSA(ftok *token.File, f *ast.File, fn *ast.FuncDecl, fnType *types.Fun
 	// Link up variable uses to variable definitions
 	s.linkForwardReferences()
 
-	fmt.Println("f:", f)
+	//fmt.Println("f:", f)
 
 	ssa.Compile(s.f)
 

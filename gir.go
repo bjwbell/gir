@@ -15,6 +15,7 @@ import (
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
+	"github.com/bjwbell/gir/codegen"
 )
 
 var (
@@ -72,6 +73,16 @@ func main() {
 		fmt.Println(tok, "type ", tok.Type)
 	}
 	parser := parse.NewParser(file, scanner2, context)
-	declFile := parser.ParseFile()
-	fmt.Println("tree(exprs): ", parse.Tree(declFile))
+	fileDecl := parser.ParseFile()
+	fmt.Println("tree(exprs): ", parse.Tree(fileDecl))
+
+	for _, fnDecl := range fileDecl.Decls {
+		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
+		if ssafn == nil || !ok {
+			fmt.Println("Error building SSA form")
+			return
+		} else {
+			fmt.Println("ssa:\n", ssafn)
+		}
+	}
 }
