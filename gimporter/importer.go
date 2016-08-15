@@ -2,13 +2,18 @@ package gimporter
 
 import (
 	"github.com/bjwbell/gir/gst"
-	"github.com/bjwbell/gir/gtypes"
+	"go/types"
+	"go/token"
 )
 
-func ParseFuncDecl(fnDecl *gst.FuncDecl) (*gtypes.Func, bool) {
-	var fn gtypes.Func
-	fn.Pkg = nil
-	fn.Name = fnDecl.Name
-	fn.Typ = &gtypes.Signature{}
-	return &fn, true
+func ParseFuncDecl(fnDecl *gst.FuncDecl) (*types.Func, bool) {
+	var fn *types.Func
+	var pkg *types.Package
+	pkg = nil
+	name := fnDecl.Name
+	var sig *types.Signature
+	sig = nil
+	var pos token.Pos
+	fn = types.NewFunc(pos, pkg, name, sig)
+	return fn, true
 }

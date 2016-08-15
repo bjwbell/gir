@@ -10,10 +10,9 @@ import (
 	"github.com/bjwbell/ssa"
 	"github.com/bjwbell/gir/gst"
 	"github.com/bjwbell/gir/gimporter"
-	"github.com/bjwbell/gir/gtypes"
 )
 
-func TypeCheckFn(fnDecl *gst.FuncDecl, log bool) (function *gtypes.Func, er error) {
+func TypeCheckFn(fnDecl *gst.FuncDecl, log bool) (function *types.Func, er error) {
 	function, ok := gimporter.ParseFuncDecl(fnDecl)
 	if !ok {
 		fmt.Printf("Error importing %v\n", fnDecl.Name)
@@ -132,17 +131,17 @@ func getVars(ctx Ctx, fnDecl *ast.FuncDecl, fnType *types.Func) []ssaVar {
 	return vars
 }
 
-func buildSSA(fn *gst.FuncDecl, fnType *gtypes.Func, log bool) (ssafn *ssa.Func, ok bool) {
+func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, ok bool) {
 
 	// HACK, hardcoded
 	arch := "amd64"
 
-	signature := fnType.Typ
-	if signature == nil || signature.Results == nil {
+	signature, ok := fnType.Type().(*types.Signature)
+	if signature == nil || !ok {
 		return nil, false
 	}
 	
-	if len(*signature.Results) > 1 {
+	if signature.Results().Len() > 1 {
 		fmt.Println("Multiple return values not supported")
 	}
 
@@ -156,7 +155,7 @@ func buildSSA(fn *gst.FuncDecl, fnType *gtypes.Func, log bool) (ssafn *ssa.Func,
 	s.fnInfo = nil
 	s.config = ssa.NewConfig(arch, &e, &link, false)
 	s.f = s.config.NewFunc()
-	s.f.Name = fnType.Name
+	s.f.Name = fnType.Name()
 	//s.f.Entry = s.f.NewBlock(ssa.BlockPlain)
 
 	//s.scanBlocks(fn.Body)
