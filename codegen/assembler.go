@@ -862,9 +862,8 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		opregreg(int(v.Op.Asm()), r, y)
 
 	case ssa.OpAMD64DIVQ, ssa.OpAMD64DIVL, ssa.OpAMD64DIVW,
-		ssa.OpAMD64DIVQU, ssa.OpAMD64DIVLU, ssa.OpAMD64DIVWU,
-		ssa.OpAMD64MODQ, ssa.OpAMD64MODL, ssa.OpAMD64MODW,
-		ssa.OpAMD64MODQU, ssa.OpAMD64MODLU, ssa.OpAMD64MODWU:
+		ssa.OpAMD64DIVQU, ssa.OpAMD64DIVLU, ssa.OpAMD64DIVWU:
+		
 
 		// Arg[0] is already in AX as it's the only register we allow
 		// and AX is the only output
@@ -874,23 +873,22 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		// negative int is divided by -1.
 		var j *Prog
 		if v.Op == ssa.OpAMD64DIVQ || v.Op == ssa.OpAMD64DIVL ||
-			v.Op == ssa.OpAMD64DIVW || v.Op == ssa.OpAMD64MODQ ||
-			v.Op == ssa.OpAMD64MODL || v.Op == ssa.OpAMD64MODW {
+			v.Op == ssa.OpAMD64DIVW {
 
 			var c *Prog
 			switch v.Op {
-			case ssa.OpAMD64DIVQ, ssa.OpAMD64MODQ:
+			case ssa.OpAMD64DIVQ:
 				c = CreateProg(x86.ACMPQ)
 				j = CreateProg(x86.AJEQ)
 				// go ahead and sign extend to save doing it later
 				CreateProg(x86.ACQO)
 
-			case ssa.OpAMD64DIVL, ssa.OpAMD64MODL:
+			case ssa.OpAMD64DIVL:
 				c = CreateProg(x86.ACMPL)
 				j = CreateProg(x86.AJEQ)
 				CreateProg(x86.ACDQ)
 
-			case ssa.OpAMD64DIVW, ssa.OpAMD64MODW:
+			case ssa.OpAMD64DIVW:
 				c = CreateProg(x86.ACMPW)
 				j = CreateProg(x86.AJEQ)
 				CreateProg(x86.ACWD)
@@ -906,9 +904,9 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 
 		// for unsigned ints, we sign extend by setting DX = 0
 		// signed ints were sign extended above
-		if v.Op == ssa.OpAMD64DIVQU || v.Op == ssa.OpAMD64MODQU ||
-			v.Op == ssa.OpAMD64DIVLU || v.Op == ssa.OpAMD64MODLU ||
-			v.Op == ssa.OpAMD64DIVWU || v.Op == ssa.OpAMD64MODWU {
+		if v.Op == ssa.OpAMD64DIVQU ||
+			v.Op == ssa.OpAMD64DIVLU ||
+			v.Op == ssa.OpAMD64DIVWU {
 			c := CreateProg(x86.AXORQ)
 			c.From.Type = TYPE_REG
 			c.From.Reg = x86.REG_DX

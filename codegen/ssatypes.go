@@ -139,3 +139,9 @@ func (e *ssaExport) SplitStruct(localSlot ssa.LocalSlot, i int) ssa.LocalSlot {
 	// TODO
 	return ssa.LocalSlot{}
 }
+
+// returns (hi, lo)
+func (e *ssaExport) SplitInt64(localslot ssa.LocalSlot) (ssa.LocalSlot, ssa.LocalSlot) {
+	// TODO
+	return ssa.LocalSlot{}, ssa.LocalSlot{}
+}

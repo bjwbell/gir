@@ -286,3 +286,8 @@ func (t *Type) IsPtrShaped() bool {
 	// TODO
 	return false
 }
+
+func (t *Type) IsTuple() bool {
+	// TODO
+	return false
+}
