@@ -27,6 +27,7 @@ func TypeCheckFn(fnDecl *gst.FuncDecl, log bool) (function *types.Func, er error
 func BuildSSA(fnDecl *gst.FuncDecl, pkgName string, log bool) (ssafn *ssa.Func, usessa bool) {
 	function, err := TypeCheckFn(fnDecl, log)
 	if err != nil {
+		fmt.Println("Error in TypeCheckFn")
 	 	return nil, false
 	}
 	ssafn, ok := buildSSA(fnDecl, function, log)
