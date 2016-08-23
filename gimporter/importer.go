@@ -12,7 +12,7 @@ func ParseFuncDecl(fnDecl *gst.FuncDecl) (*types.Func, bool) {
 	pkg = nil
 	name := fnDecl.Name
 	var sig *types.Signature
-	sig = nil
+	sig = types.NewSignature(nil, nil, nil, false)
 	var pos token.Pos
 	fn = types.NewFunc(pos, pkg, name, sig)
 	return fn, true
