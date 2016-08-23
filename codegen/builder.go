@@ -139,11 +139,13 @@ func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, 
 
 	signature, ok := fnType.Type().(*types.Signature)
 	if signature == nil || !ok {
+		fmt.Println("Error: function type isn't signature");
 		return nil, false
 	}
 	
 	if signature.Results().Len() > 1 {
 		fmt.Println("Multiple return values not supported")
+		return nil, false
 	}
 
 	var e ssaExport
