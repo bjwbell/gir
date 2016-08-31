@@ -152,7 +152,7 @@ func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, 
 	var s state
 	e.log = log
 	link := obj.Link{}
-	s.ctx = Ctx{nil, nil} //Ctx{ftok, fnInfo}
+	s.ctx = Ctx{nil} //Ctx{fnInfo}
 	s.fnDecl = nil
 	s.fnType = nil
 	s.fnInfo = nil
