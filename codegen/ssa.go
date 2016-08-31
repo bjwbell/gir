@@ -331,9 +331,14 @@ func (s *state) scanBlocksGst(fnBody gst.Stmt) {
 	var block *Block
 	b := s.f.NewBlock(ssa.BlockPlain)
 	var labelStmt *ast.LabeledStmt
-	labelStmt = nil
+	labelStmt = &ast.LabeledStmt{}
+	var labelIdent ast.Ident
+	labelStmt.Label = &labelIdent
+	labelStmt.Stmt = &ast.ReturnStmt{}
 	block = &Block{b: b, label: labelStmt}
+	block.stmts = []ast.Stmt{labelStmt}
 	s.blocks = append(s.blocks, block)
+	
 	s.checkBlocks()
 }
 
