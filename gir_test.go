@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"io"
 	"os"
 	"testing" 
 
@@ -18,28 +17,29 @@ func TestGir(t *testing.T) {
 	var (
 		conf    config.Config
 		context value.Context
-		fd      io.Reader
+		fd      *os.File
 		err     error
 	)
 	context = exec.NewContext(&conf)
-	file := "test.gir"
-	fd, err = os.Open(file)
-	if err != nil {
-		t.Fatalf("gir: %s\n", err)
-	}
-	scanner := scan.New(context, file, bufio.NewReader(fd))
-	parser := parse.NewParser(file, scanner, context)
-	t.Logf("parser: %#v\n", parser)
-	fileDecl := parser.ParseFile()
-	t.Log("tree(exprs): ", parse.Tree(fileDecl))
+	for _, file := range []string {"test.gir", "test1.gir", "test2.gir", "test3.gir", "test4.gir"} {
+		fd, err = os.Open(file)
+		defer fd.Close()
+		if err != nil {
+			t.Fatalf("gir: %s\n", err)
+		}
+		scanner := scan.New(context, file, bufio.NewReader(fd))
+		parser := parse.NewParser(file, scanner, context)
+		fileDecl := parser.ParseFile()
+		t.Log("tree(exprs): ", parse.Tree(fileDecl))
 
-	for _, fnDecl := range fileDecl.Decls {
-		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
-		if ssafn == nil || !ok {
-			t.Fatalf("gir: Error building SSA form")
-			return
-		} else {
-			t.Log("ssa:\n", ssafn)
+		for _, fnDecl := range fileDecl.Decls {
+			ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
+			if ssafn == nil || !ok {
+				t.Fatalf("gir: Error building SSA form")
+				return
+			} else {
+				t.Log("ssa:\n", ssafn)
+			}
 		}
 	}
 
