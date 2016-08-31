@@ -161,7 +161,7 @@ func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, 
 	s.f.Name = fnType.Name()
 	//s.f.Entry = s.f.NewBlock(ssa.BlockPlain)
 
-	//s.scanBlocks(fn.Body)
+	s.scanBlocksGst(fn.Body)
 	if len(s.blocks) < 1 {
 		panic("no blocks found, need at least one block per function")
 	}

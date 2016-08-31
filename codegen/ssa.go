@@ -8,6 +8,7 @@ import (
 	"go/types"
 
 	"github.com/bjwbell/ssa"
+	"github.com/bjwbell/gir/gst"
 )
 
 type Block struct {
@@ -324,6 +325,16 @@ func (s *state) blockLabel(block *ast.BlockStmt) *ast.LabeledStmt {
 
 	}
 	return nil
+}
+
+func (s *state) scanBlocksGst(fnBody gst.Stmt) {
+	var block *Block
+	b := s.f.NewBlock(ssa.BlockPlain)
+	var labelStmt *ast.LabeledStmt
+	labelStmt = nil
+	block = &Block{b: b, label: labelStmt}
+	s.blocks = append(s.blocks, block)
+	s.checkBlocks()
 }
 
 func (s *state) scanBlocks(fnBody *ast.BlockStmt) {
