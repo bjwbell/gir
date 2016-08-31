@@ -159,7 +159,7 @@ func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, 
 	s.config = ssa.NewConfig(arch, &e, &link, false)
 	s.f = s.config.NewFunc()
 	s.f.Name = fnType.Name()
-	//s.f.Entry = s.f.NewBlock(ssa.BlockPlain)
+	s.f.Entry = s.f.NewBlock(ssa.BlockPlain)
 
 	s.scanBlocksGst(fn.Body)
 	if len(s.blocks) < 1 {
