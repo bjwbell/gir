@@ -5,17 +5,18 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
+	"github.com/bjwbell/gir/codegen"
 	"github.com/bjwbell/gir/config"
 	"github.com/bjwbell/gir/exec"
 	"github.com/bjwbell/gir/parse"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/token"
 	"github.com/bjwbell/gir/value"
-	"github.com/bjwbell/gir/codegen"
 )
 
 var (
@@ -41,16 +42,20 @@ func main() {
 	context = exec.NewContext(&conf)
 
 	var f = flag.String("f", "", "input *.gir file ")
+	var o = flag.String("o", "", "output *.s file ")
 	flag.Parse()
 
 	file := ""
+	outfile := ""
 	log.SetFlags(log.Lshortfile)
 	if *f != "" {
 		file = *f
 	} else {
 		log.Fatalf("Error no file provided")
 	}
-
+	if *o != "" {
+		outfile = *o
+	}
 	var fd io.Reader
 	var err error
 	fd, err = os.Open(file)
@@ -76,13 +81,22 @@ func main() {
 	fileDecl := parser.ParseFile()
 	fmt.Println("tree(exprs): ", parse.Tree(fileDecl))
 
+	asm := ""
 	for _, fnDecl := range fileDecl.Decls {
 		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
 		if ssafn == nil || !ok {
 			fmt.Println("Error building SSA form")
 			return
 		} else {
+			asm += ssafn.String() + "\n"
 			fmt.Println("ssa:\n", ssafn)
+		}
+	}
+
+	if outfile != "" {
+		err = ioutil.WriteFile(outfile, []byte(asm), 0644)
+		if err != nil {
+			panic(err)
 		}
 	}
 }
