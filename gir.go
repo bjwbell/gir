@@ -80,7 +80,6 @@ func main() {
 	parser := parse.NewParser(file, scanner2, context)
 	fileDecl := parser.ParseFile()
 	fmt.Println("tree(exprs): ", parse.Tree(fileDecl))
-
 	asm := ""
 	for _, fnDecl := range fileDecl.Decls {
 		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
@@ -88,8 +87,15 @@ func main() {
 			fmt.Println("Error building SSA form")
 			return
 		} else {
-			asm += ssafn.String() + "\n"
 			fmt.Println("ssa:\n", ssafn)
+			fnProgs, success := codegen.GenProg(ssafn)
+			if !success {
+				fmt.Println("Error generating assembly")
+			} else {
+				for _, p := range fnProgs {
+					asm += p.Sprint(false) + "\n"
+				}
+			}
 		}
 	}
 
