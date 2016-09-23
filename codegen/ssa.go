@@ -7,8 +7,8 @@ import (
 	"go/token"
 	"go/types"
 
-	"github.com/bjwbell/ssa"
 	"github.com/bjwbell/gir/gst"
+	"github.com/bjwbell/ssa"
 )
 
 type Block struct {
@@ -121,10 +121,10 @@ func (s *state) Unimplementedf(msg string, args ...interface{}) {
 	// TODO: comment/remove when no longer needed for debugging
 	fmt.Printf("s.UNIMPLEMENTED msg: %v\n", fmt.Sprintf(msg, args))
 
-	s.config.Unimplementedf(0, msg, args...)
+	s.config.Fatalf(0, msg, args...)
 }
 func (s *state) Warnl(line int32, msg string, args ...interface{}) { s.config.Warnl(line, msg, args...) }
-func (s *state) Debug_checknil() bool                            { return s.config.Debug_checknil() }
+func (s *state) Debug_checknil() bool                              { return s.config.Debug_checknil() }
 
 var (
 	// dummy node for the memory variable
@@ -338,7 +338,7 @@ func (s *state) scanBlocksGst(fnBody gst.Stmt) {
 	block = &Block{b: b, label: labelStmt}
 	block.stmts = []ast.Stmt{labelStmt}
 	s.blocks = append(s.blocks, block)
-	
+
 	s.checkBlocks()
 }
 

@@ -45,10 +45,10 @@ func Warnl(line int, fmt_ string, args ...interface{}) {
 func regnum(v *ssa.Value) int16 {
 	reg := v.Block.Func.RegAlloc[v.ID]
 	if reg == nil {
-		v.Unimplementedf("nil regnum for value: %s\n%s\n", v.LongString(), v.Block.Func)
+		v.Fatalf("nil regnum for value: %s\n%s\n", v.LongString(), v.Block.Func)
 		return 0
 	}
-	return ssaRegToReg[reg.(*ssa.Register).Num]
+	return ssaRegToReg[reg.(*ssa.Register).Num()]
 }
 
 // autoVar returns a *Node and int64 representing the auto variable and offset within it
@@ -799,9 +799,9 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 	// 2-address opcode arithmetic, symmetric
 	case ssa.OpAMD64ADDSS, ssa.OpAMD64ADDSD,
 		ssa.OpAMD64ANDQ, ssa.OpAMD64ANDL,
-		ssa.OpAMD64ORQ, ssa.OpAMD64ORL, 
+		ssa.OpAMD64ORQ, ssa.OpAMD64ORL,
 		ssa.OpAMD64XORQ, ssa.OpAMD64XORL,
-		ssa.OpAMD64MULQ, ssa.OpAMD64MULL, 
+		ssa.OpAMD64MULQ, ssa.OpAMD64MULL,
 		ssa.OpAMD64MULSS, ssa.OpAMD64MULSD, ssa.OpAMD64PXOR:
 		r := regnum(v)
 		x := regnum(v.Args[0])
@@ -863,7 +863,6 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 
 	case ssa.OpAMD64DIVQ, ssa.OpAMD64DIVL, ssa.OpAMD64DIVW,
 		ssa.OpAMD64DIVQU, ssa.OpAMD64DIVLU, ssa.OpAMD64DIVWU:
-		
 
 		// Arg[0] is already in AX as it's the only register we allow
 		// and AX is the only output
@@ -993,7 +992,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		case ssa.OpAMD64ADDQconst:
 			asm = x86.ALEAQ
 		case ssa.OpAMD64ADDLconst:
-			asm = x86.ALEAL		
+			asm = x86.ALEAL
 		}
 		p = CreateProg(asm)
 		p.From.Type = TYPE_MEM
@@ -1023,7 +1022,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		//p.From3.Type = TYPE_REG
 		//p.From3.Reg = regnum(v.Args[0])
 		progs = append(progs, p)
-	case 
+	case
 		ssa.OpAMD64ANDQconst, ssa.OpAMD64ANDLconst,
 		ssa.OpAMD64ORQconst, ssa.OpAMD64ORLconst,
 		ssa.OpAMD64XORQconst, ssa.OpAMD64XORLconst,
@@ -1211,7 +1210,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		progs = append(progs, p)
 	case ssa.OpAMD64MOVOconst:
 		if v.AuxInt != 0 {
-			v.Unimplementedf("MOVOconst can only do constant=0")
+			v.Fatalf("MOVOconst can only do constant=0")
 		}
 		r := regnum(v)
 		opregreg(x86.AXORPS, r, r)
@@ -1233,7 +1232,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		}
 	case ssa.OpLoadReg:
 		if v.Type.IsFlags() {
-			v.Unimplementedf("load flags not implemented: %v", v.LongString())
+			v.Fatalf("load flags not implemented: %v", v.LongString())
 			panic("unimplementedf")
 			//return
 		}
@@ -1254,7 +1253,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		progs = append(progs, p)
 	case ssa.OpStoreReg:
 		if v.Type.IsFlags() {
-			v.Unimplementedf("store flags not implemented: %v", v.LongString())
+			v.Fatalf("store flags not implemented: %v", v.LongString())
 			panic("unimplementedf")
 			//return
 		}
@@ -1445,7 +1444,7 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		progs = append(progs, p)
 	default:
 		fmt.Println("unimplemented OP:", v.Op.String())
-		v.Unimplementedf("genValue not implemented: %s", v.LongString())
+		v.Fatalf("genValue not implemented: %s", v.LongString())
 		panic("unimplementedf")
 
 	}
@@ -1551,7 +1550,7 @@ func (s *genState) genBlock(b, next *ssa.Block) []*Prog {
 	lineno = b.Line
 
 	switch b.Kind {
-	case ssa.BlockPlain, ssa.BlockCall, ssa.BlockCheck:
+	case ssa.BlockPlain:
 		if b.Succs[0].Block() != next {
 			p := CreateProg(obj.AJMP)
 			p.To.Type = TYPE_BRANCH
@@ -1774,7 +1773,7 @@ func regMoveByTypeAMD64(t ssa.Type) int {
 /*func regnum(v *ssa.Value) int16 {
 	reg := v.Block.Func.RegAlloc[v.ID]
 	if reg == nil {
-		v.Unimplementedf("nil regnum for value: %s\n%s\n", v.LongString(), v.Block.Func)
+		v.Fatalf("nil regnum for value: %s\n%s\n", v.LongString(), v.Block.Func)
 		return 0
 	}
 	return ssaRegToReg[reg.(*ssa.Register).Num]
