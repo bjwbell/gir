@@ -563,7 +563,7 @@ func Preamble() string {
 }
 
 func FuncProto(name string, frameSize, argsSize int) string {
-	a := fmt.Sprintf("TEXT ·%v(SB),$%v-%v", name, frameSize, argsSize)
+	a := fmt.Sprintf("TEXT ·%v(SB),$%v-%v\n", name, frameSize, argsSize)
 	return a
 }
 
@@ -573,6 +573,22 @@ func Assemble(fn []*Prog) (assembly string) {
 		assembly += p.Sprint(false) + "\n"
 	}
 	return assembly
+}
+
+func GenAsm(f *ssa.Func) (asm string, ok bool) {
+	if f == nil {
+		return "", false
+	}
+	asm = FuncProto(f.Name, 0, 0)
+	progs, success := GenProg(f)
+	if !success {
+		return "", false
+	} else {
+		for _, p := range progs {
+			asm += p.Sprint(false) + "\n"
+		}
+	}
+	return asm, true
 }
 
 func GenProg(f *ssa.Func) (fnProg []*Prog, ok bool) {

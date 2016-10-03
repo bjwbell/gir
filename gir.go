@@ -88,13 +88,10 @@ func main() {
 			return
 		} else {
 			fmt.Println("ssa:\n", ssafn)
-			fnProgs, success := codegen.GenProg(ssafn)
-			if !success {
+			var ok bool
+			asm, ok = codegen.GenAsm(ssafn)
+			if !ok {
 				fmt.Println("Error generating assembly")
-			} else {
-				for _, p := range fnProgs {
-					asm += p.Sprint(false) + "\n"
-				}
 			}
 		}
 	}
