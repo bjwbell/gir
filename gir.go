@@ -44,7 +44,6 @@ func main() {
 	var f = flag.String("f", "", "input *.gir file ")
 	var o = flag.String("o", "", "output *.s file ")
 	var proto = flag.String("proto", "", "output *.go prototype file")
-	var pkg = flag.String("pkg", "", "Go prototype file pkg")
 	flag.Parse()
 
 	file := ""
@@ -85,6 +84,7 @@ func main() {
 	}
 	parser := parse.NewParser(file, scanner2, context)
 	fileDecl := parser.ParseFile()
+	pkg := fileDecl.PkgName
 	fmt.Println("tree(exprs): ", parse.Tree(fileDecl))
 	asm := ""
 	protos := ""
@@ -118,9 +118,7 @@ func main() {
 	}
 	if protofile != "" {
 		protoTxt := ""
-		if *pkg != "" {
-			protoTxt = "package " + *pkg + "\n"
-		}
+		protoTxt = "package " + pkg + "\n"
 		protoTxt += protos
 		err = ioutil.WriteFile(protofile, []byte(protoTxt), 0644)
 		if err != nil {

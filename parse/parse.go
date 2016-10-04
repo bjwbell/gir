@@ -15,11 +15,11 @@ import (
 func Tree(e interface{}) string {
 	switch e := e.(type) {
 	case *gst.File:
-		return fmt.Sprintf("(package %s %s)", e.Name, Tree(e.Decls))
+		return fmt.Sprintf("(package %s %s)", e.PkgName, Tree(e.Decls))
 	case []gst.FuncDecl:
 		s := ""
 		for _, fn := range e {
-			s +=fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Body))
+			s += fmt.Sprintf("func %s() {\n%s\n}", fn.Name, Tree(fn.Body))
 		}
 		return s
 	case *gst.RetStmt:
@@ -59,10 +59,8 @@ func Tree(e interface{}) string {
 	}
 }
 
-
 // sliceExpr holds a syntactic vector to be verified and evaluated.
 type sliceExpr []value.Expr
-
 
 func (s sliceExpr) ProgString() string {
 	// TODO
@@ -83,13 +81,10 @@ func (e variableExpr) ProgString() string {
 	return e.name
 }
 
-
-
 type unary struct {
 	op    string
 	right interface{}
 }
-
 
 type binary struct {
 	op    string
@@ -127,7 +122,6 @@ func NewParser(fileName string, scanner *scan.Scanner, context value.Context) *P
 		context:  context,
 	}
 }
-
 
 // Println prints the args and writes them to the configured output writer.
 func (p *Parser) Println(args ...interface{}) {
@@ -188,8 +182,6 @@ func (p *Parser) peek() token.Token {
 	return p.peekTok
 }
 
-
-
 func (p *Parser) error(msg string) {
 	// TODO: Improve
 	panic(msg)
@@ -204,10 +196,9 @@ func (p *Parser) expectTok(t token.Type) (token.Token, bool) {
 	}
 }
 
-
 func (p *Parser) expect(tok token.Token) (bool, token.Token) {
 	t := p.next() // make progress
-	
+
 	if tok.Type == t.Type && tok.Text == t.Text {
 		return true, t
 	} else {
@@ -216,11 +207,11 @@ func (p *Parser) expect(tok token.Token) (bool, token.Token) {
 }
 
 func (p *Parser) absorbWhitespace() {
-	for ;  p.peek().Type == token.Newline; p.next() {
+	for ; p.peek().Type == token.Newline; p.next() {
 	}
 }
 
-func (p *Parser) ParseFile() (*gst.File) {
+func (p *Parser) ParseFile() *gst.File {
 	pos_valid, _ := p.expect(token.Token{token.PACKAGE, 0, "package"})
 	if !pos_valid {
 		p.error("expected package keyword")
@@ -236,22 +227,21 @@ func (p *Parser) ParseFile() (*gst.File) {
 	}
 
 	return &gst.File{
-		Name:       ident.Text,
-		Decls:      decls,
+		PkgName: ident.Text,
+		Decls:   decls,
 	}
 }
-
 
 func (p *Parser) parseIdent() *token.Token {
 	name := "_"
 	if p.peek().Type == token.Identifier {
 		name = p.peek().Text
-		p.next()	} else {
+		p.next()
+	} else {
 		p.expectTok(token.Identifier) // use expect() error handling
 	}
 	return &token.Token{token.Identifier, 0, name}
 }
-
 
 func (p *Parser) parseFuncDecl() *gst.FuncDecl {
 	p.absorbWhitespace()
@@ -281,7 +271,7 @@ func (p *Parser) parseFuncDecl() *gst.FuncDecl {
 	p.absorbWhitespace()
 	var decl gst.FuncDecl
 	body, ok := p.parseStmt()
-	
+
 	decl.Body = body
 	decl.Name = fnIdent.Text
 	if !ok {
@@ -382,7 +372,6 @@ func (p *Parser) statementList(tok token.Token) ([]value.Expr, bool) {
 	}
 	return exprs, true
 }
-
 
 // expr
 //operand
