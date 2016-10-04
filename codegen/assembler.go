@@ -575,6 +575,15 @@ func Assemble(fn []*Prog) (assembly string) {
 	return assembly
 }
 
+func GenGoProto(f *ssa.Func) (proto string, ok bool) {
+	if f == nil {
+		return "", false
+	}
+
+	proto = fmt.Sprintf("func %v()\n", f.Name)
+	return proto, true
+}
+
 func GenAsm(f *ssa.Func) (asm string, ok bool) {
 	if f == nil {
 		return "", false

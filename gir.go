@@ -43,10 +43,13 @@ func main() {
 
 	var f = flag.String("f", "", "input *.gir file ")
 	var o = flag.String("o", "", "output *.s file ")
+	var proto = flag.String("proto", "", "output *.go prototype file")
+	var pkg = flag.String("pkg", "", "Go prototype file pkg")
 	flag.Parse()
 
 	file := ""
 	outfile := ""
+	protofile := ""
 	log.SetFlags(log.Lshortfile)
 	if *f != "" {
 		file = *f
@@ -55,6 +58,9 @@ func main() {
 	}
 	if *o != "" {
 		outfile = *o
+	}
+	if *proto != "" {
+		protofile = *proto
 	}
 	var fd io.Reader
 	var err error
@@ -81,6 +87,7 @@ func main() {
 	fileDecl := parser.ParseFile()
 	fmt.Println("tree(exprs): ", parse.Tree(fileDecl))
 	asm := ""
+	protos := ""
 	for _, fnDecl := range fileDecl.Decls {
 		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
 		if ssafn == nil || !ok {
@@ -93,11 +100,29 @@ func main() {
 			if !ok {
 				fmt.Println("Error generating assembly")
 			}
+
+			if fnProto, ok := codegen.GenGoProto(ssafn); ok {
+				protos += fnProto
+			} else {
+				fmt.Println("Error generating Go proto file")
+			}
+
 		}
 	}
 
 	if outfile != "" {
 		err = ioutil.WriteFile(outfile, []byte(asm), 0644)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if protofile != "" {
+		protoTxt := ""
+		if *pkg != "" {
+			protoTxt = "package " + *pkg + "\n"
+		}
+		protoTxt += protos
+		err = ioutil.WriteFile(protofile, []byte(protoTxt), 0644)
 		if err != nil {
 			panic(err)
 		}
