@@ -1,5 +1,11 @@
 package main
 
+//go:generate gir -f testdata/test.gir -o testdata/test_amd64.s -proto testdata/test_proto.go
+//go:generate gir -f testdata/test1.gir -o testdata/test1_amd64.s -proto testdata/test1_proto.go
+//go:generate gir -f testdata/test2.gir -o testdata/test2_amd64.s -proto testdata/test2_proto.go
+//go:generate gir -f testdata/test3.gir -o testdata/test3_amd64.s -proto testdata/test3_proto.go
+//go:generate gir -f testdata/test4.gir -o testdata/test4_amd64.s -proto testdata/test4_proto.go
+
 import (
 	"bufio"
 	"flag"
