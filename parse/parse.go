@@ -224,6 +224,7 @@ func (p *Parser) ParseFile() *gst.File {
 	var decls []gst.FuncDecl
 	for p.peek().Type != token.EOF {
 		decls = append(decls, *p.parseFuncDecl())
+		p.absorbWhitespace()
 	}
 
 	return &gst.File{
