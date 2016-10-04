@@ -212,6 +212,14 @@ func (p *Parser) absorbWhitespace() {
 }
 
 func (p *Parser) ParseFile() *gst.File {
+	p.absorbWhitespace()
+	if p.peek().Type == token.EOF {
+		return &gst.File{
+			PkgName: "",
+			Decls:   []gst.FuncDecl{},
+		}
+	}
+
 	pos_valid, _ := p.expect(token.Token{token.PACKAGE, 0, "package"})
 	if !pos_valid {
 		p.error("expected package keyword")

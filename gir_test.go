@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -16,23 +14,29 @@ import (
 	"github.com/bjwbell/gir/value"
 )
 
-func buildTest(t *testing.T, filename string) {
-	doTest(t, filename, "build")
-}
-
 func runTest(t *testing.T, filename string) {
-	doTest(t, filename, "run")
-}
-
-func doTest(t *testing.T, filename string, kind string) {
-	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", kind, filepath.Join("testdata", filename))
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed: %v:\nOut: %s\nStderr: %s\n", err, &stdout, &stderr)
+	context := ctx.NewContext(&conf)
+	fd, err := os.Open(filepath.Join("testdata", filename))
+	defer fd.Close()
+	if err != nil {
+		t.Fatalf("gir: %s\n", err)
+	}
+	scanner := scan.New(context, filename, bufio.NewReader(fd))
+	parser := parse.NewParser(filename, scanner, context)
+	fileDecl := parser.ParseFile()
+	for _, fnDecl := range fileDecl.Decls {
+		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.PkgName, false)
+		if ssafn == nil || !ok {
+			t.Fatalf("gir: Error building SSA form")
+			return
+		} else {
+			t.Log("ssa:\n", ssafn)
+		}
 	}
 }
+
+// TestEmptyFile tests lexing and parsing of an empty gir file"
+func TestEmptyFile(t *testing.T) { runTest(t, "empty.gir") }
 
 func TestGir(t *testing.T) {
 	var (
