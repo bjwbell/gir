@@ -12,7 +12,7 @@ import (
 
 	"github.com/bjwbell/gir/codegen"
 	"github.com/bjwbell/gir/config"
-	"github.com/bjwbell/gir/exec"
+	"github.com/bjwbell/gir/ctx"
 	"github.com/bjwbell/gir/parse"
 	"github.com/bjwbell/gir/scan"
 	"github.com/bjwbell/gir/token"
@@ -39,7 +39,7 @@ func filePath(pathName string) string {
 
 func main() {
 
-	context = exec.NewContext(&conf)
+	context = ctx.NewContext(&conf)
 
 	var f = flag.String("f", "", "input *.gir file ")
 	var o = flag.String("o", "", "output *.s file ")
