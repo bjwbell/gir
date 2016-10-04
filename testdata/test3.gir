@@ -1,5 +1,5 @@
 package testdata
 
-func t3() {
+func T3() {
      6 * (2 + 4)
 }

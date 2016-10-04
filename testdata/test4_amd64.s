@@ -1,2 +1,2 @@
-TEXT ·t4(SB),$0-0
+TEXT ·T4(SB),$0-0
 RET

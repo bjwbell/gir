@@ -1,5 +1,5 @@
 package testdata
 
-func t4() {
+func T4() {
      ret
 }

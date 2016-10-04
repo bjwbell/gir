@@ -1,3 +1,5 @@
+// +build amd64
+
 package main
 
 import (
@@ -11,6 +13,7 @@ import (
 	"github.com/bjwbell/gir/ctx"
 	"github.com/bjwbell/gir/parse"
 	"github.com/bjwbell/gir/scan"
+	"github.com/bjwbell/gir/testdata"
 	"github.com/bjwbell/gir/value"
 )
 
@@ -37,6 +40,18 @@ func runTest(t *testing.T, filename string) {
 
 // TestEmptyFile tests lexing and parsing of an empty gir file"
 func TestEmptyFile(t *testing.T) { runTest(t, "empty.gir") }
+
+// TestT1 tests calling generated *_amd64.s function
+func TestT1(t *testing.T) { testdata.T1() }
+
+// TestT2 tests calling generated *_amd64.s function
+func TestT2(t *testing.T) { testdata.T2() }
+
+// TestT3 tests calling generated *_amd64.s function
+func TestT3(t *testing.T) { testdata.T3() }
+
+// TestT4 tests calling generated *_amd64.s function
+func TestT4(t *testing.T) { testdata.T4() }
 
 func TestGir(t *testing.T) {
 	var (

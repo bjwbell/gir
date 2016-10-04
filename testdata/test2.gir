@@ -1,5 +1,5 @@
 package testdata
 
-func t2() {
+func T2() {
      1 + 2
 }

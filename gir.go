@@ -123,8 +123,8 @@ func main() {
 		}
 	}
 	if protofile != "" {
-		protoTxt := ""
-		protoTxt = "package " + pkg + "\n"
+		protoTxt := "// +build amd64\n\n"
+		protoTxt += fmt.Sprintf("package %s\n", pkg)
 		protoTxt += protos
 		err = ioutil.WriteFile(protofile, []byte(protoTxt), 0644)
 		if err != nil {

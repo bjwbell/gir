@@ -1,2 +1,4 @@
+// +build amd64
+
 package testdata
-func t1()
+func T1()
