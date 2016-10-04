@@ -89,7 +89,7 @@ func main() {
 	asm := ""
 	protos := ""
 	for _, fnDecl := range fileDecl.Decls {
-		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
+		ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.PkgName, false)
 		if ssafn == nil || !ok {
 			fmt.Println("Error building SSA form")
 			return

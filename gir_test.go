@@ -42,7 +42,7 @@ func TestGir(t *testing.T) {
 		err     error
 	)
 	context = ctx.NewContext(&conf)
-	for _, file := range []string{"test.gir", "test1.gir", "test2.gir", "test3.gir", "test4.gir"} {
+	for _, file := range []string{filepath.Join("testdata", "test.gir"), filepath.Join("testdata", "test1.gir"), filepath.Join("testdata", "test2.gir"), filepath.Join("testdata", "test3.gir"), filepath.Join("testdata", "test4.gir")} {
 		fd, err = os.Open(file)
 		defer fd.Close()
 		if err != nil {
@@ -54,7 +54,7 @@ func TestGir(t *testing.T) {
 		t.Log("tree(exprs): ", parse.Tree(fileDecl))
 
 		for _, fnDecl := range fileDecl.Decls {
-			ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.Name, false)
+			ssafn, ok := codegen.BuildSSA(&fnDecl, fileDecl.PkgName, false)
 			if ssafn == nil || !ok {
 				t.Fatalf("gir: Error building SSA form")
 				return
