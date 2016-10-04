@@ -1,4 +1,4 @@
-package test3
+package testdata
 
 func t3() {
      6 * (2 + 4)

@@ -1,4 +1,5 @@
-package test4
+package testdata
+
 func test1() {
      ret
 }
