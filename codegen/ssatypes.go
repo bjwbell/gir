@@ -145,3 +145,8 @@ func (e *ssaExport) SplitInt64(localslot ssa.LocalSlot) (ssa.LocalSlot, ssa.Loca
 	// TODO
 	return ssa.LocalSlot{}, ssa.LocalSlot{}
 }
+
+// AllocFrame assigns frame offsets to all live auto variables.
+func (e *ssaExport) AllocFrame(f *ssa.Func) {
+	// TODO
+}
