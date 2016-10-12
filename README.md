@@ -4,19 +4,19 @@ Go Intermediate Representation
 [![Build Status](http://travis-ci.org/bjwbell/gir.svg?branch=master)](https://travis-ci.org/bjwbell/gir)
 
 # format
-The GIR format borrows from the LLVM language reference, http://llvm.org/docs/LangRef.html.
+The GIR format borrows from the Go compiler SSA output format.
 
-Example, multiple an integer by 8.
+Examples, multiple an integer by 8.
 ```
-%result = mul i32 %X, 8
+result = x * 8
 ```
 Definition of a function:
 ```
-define i32 main() {
-  ret i32 0
+func main() {
+  ret
 }
 ```
 
 ## keywords
-1. define
+1. func
 2. ret
