@@ -7,9 +7,9 @@ import (
 	"go/types"
 
 	"github.com/bjwbell/cmd/obj"
-	"github.com/bjwbell/ssa"
-	"github.com/bjwbell/gir/gst"
 	"github.com/bjwbell/gir/gimporter"
+	"github.com/bjwbell/gir/gst"
+	"github.com/bjwbell/ssa"
 )
 
 func TypeCheckFn(fnDecl *gst.FuncDecl, log bool) (function *types.Func, er error) {
@@ -28,7 +28,7 @@ func BuildSSA(fnDecl *gst.FuncDecl, pkgName string, log bool) (ssafn *ssa.Func, 
 	function, err := TypeCheckFn(fnDecl, log)
 	if err != nil {
 		fmt.Println("Error in TypeCheckFn")
-	 	return nil, false
+		return nil, false
 	}
 	ssafn, ok := buildSSA(fnDecl, function, log)
 	return ssafn, ok
@@ -139,12 +139,12 @@ func buildSSA(fn *gst.FuncDecl, fnType *types.Func, log bool) (ssafn *ssa.Func, 
 
 	signature, ok := fnType.Type().(*types.Signature)
 	if signature == nil || !ok {
-		fmt.Println("Error: function type isn't signature");
+		fmt.Println("Error: function type isn't signature")
 		return nil, false
 	}
-	
+
 	if signature.Results().Len() > 1 {
-		fmt.Println("Multiple return values not supported")
+		fmt.Println("Multiple return values unsupported")
 		return nil, false
 	}
 
