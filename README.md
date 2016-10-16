@@ -19,4 +19,4 @@ func main() {
 
 ## keywords
 1. func
-2. ret
+2. return

@@ -297,7 +297,7 @@ func (p *Parser) parseFuncDecl() *gst.FuncDecl {
 func (p *Parser) parseStmt() (s gst.Stmt, ok bool) {
 	t := p.peek()
 	switch t.Type {
-	case token.RET:
+	case token.RETURN:
 		t = p.next()
 		s = &gst.RetStmt{}
 		return s, true

@@ -1,5 +1,5 @@
 package testdata
 
 func test1() {
-     ret
+     return
 }

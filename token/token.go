@@ -38,9 +38,9 @@ const (
 	String     // quoted string (includes quotes)
 
 	// Literal tokens
-	FUNC       // 'func'
-	PACKAGE    // 'package'
-	RET        // 'ret'
+	FUNC    // 'func'
+	PACKAGE // 'package'
+	RETURN  // 'return'
 )
 
 func (i Token) String() string {

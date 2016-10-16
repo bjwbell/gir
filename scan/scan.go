@@ -7,8 +7,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/bjwbell/gir/value"
 	"github.com/bjwbell/gir/token"
+	"github.com/bjwbell/gir/value"
 )
 
 // Copied from robpike.io/ivy/scan
@@ -253,15 +253,15 @@ Loop:
 			l.emit(token.FUNC)
 		} else if l.IsPackage(lit) {
 			l.emit(token.PACKAGE)
-		} else if l.IsRet(lit) {
-			l.emit(token.RET)
+		} else if l.IsReturn(lit) {
+			l.emit(token.RETURN)
 		} else {
 			return l.errorf("unrecognized keyword %v", lit)
 		}
 	} else {
 		l.emit(token.Identifier)
 	}
-	
+
 	return lexAny
 }
 
@@ -273,7 +273,7 @@ func (l *Scanner) IsKeyword(lit string) bool {
 	} else if lit == "ret" {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -291,8 +291,8 @@ func (l *Scanner) IsPackage(lit string) bool {
 	return false
 }
 
-func (l *Scanner) IsRet(lit string) bool {
-	if lit == "ret" {
+func (l *Scanner) IsReturn(lit string) bool {
+	if lit == "return" {
 		return true
 	}
 	return false
@@ -300,26 +300,25 @@ func (l *Scanner) IsRet(lit string) bool {
 
 // IsBinary identifies the binary operators; these can be used in reductions.
 var IsBinary = map[string]bool{
-	"!=":     true,
-	"&":      true,
-	"*":      true,
-	"**":     true,
-	"+":      true,
-	",":      true, // Silly but not wrong.
-	"-":      true,
-	"/":      true,
-	"<":      true,
-	"<<":     true,
-	"<=":     true,
-	"==":     true,
-	">":      true,
-	">=":     true,
-	">>":     true,
-	"[]":     true,
-	"^":      true,
-	"|":      true,
+	"!=": true,
+	"&":  true,
+	"*":  true,
+	"**": true,
+	"+":  true,
+	",":  true, // Silly but not wrong.
+	"-":  true,
+	"/":  true,
+	"<":  true,
+	"<<": true,
+	"<=": true,
+	"==": true,
+	">":  true,
+	">=": true,
+	">>": true,
+	"[]": true,
+	"^":  true,
+	"|":  true,
 }
-
 
 // lexOperator completes scanning an operator. We have already accepted the + or
 // whatever; there may be a reduction or inner or outer product.
@@ -340,7 +339,7 @@ func lexOperator(l *Scanner) stateFn {
 			if isDigit(l.peek()) { // Is a number after all, as in 3*.7. Back up.
 				l.backup()
 				l.emit(token.Operator) // Up to but not including the period.
-				return lexNumber // We know it starts ".7".
+				return lexNumber       // We know it starts ".7".
 			}
 			startRight := l.pos
 			r := l.next()
