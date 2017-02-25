@@ -681,16 +681,6 @@ func GenProg(f *ssa.Func) (fnProg []*Prog, ok bool) {
 		}
 	}
 
-	// Emit static data
-	if f.StaticData != nil {
-		panic("static data unsupported")
-		/*for _, n := range f.StaticData.([]*Node) {
-			if !gen_as_init(n, false) {
-				Fatalf("non-static data marked as static: %v\n\n", n, f)
-			}
-		}*/
-	}
-
 	// Allocate stack frame
 	//allocauto(ptxt)
 
@@ -800,7 +790,6 @@ func opregreg(op int, dest, src int16) *Prog {
 func (s *genState) genValue(v *ssa.Value) []*Prog {
 	var progs []*Prog
 	var p *Prog
-	lineno = v.Line
 	switch v.Op {
 	case ssa.OpAMD64ADDQ:
 		// TODO: use addq instead of leaq if target is in the right register.
@@ -1463,9 +1452,6 @@ func (s *genState) genValue(v *ssa.Value) []*Prog {
 		p.To.Type = TYPE_MEM
 		p.To.Reg = regnum(v.Args[0])
 		addAux(&p.To, v)
-		if Debug_checknil != 0 && v.Line > 1 { // v.Line==1 in generated wrappers
-			Warnl(int(v.Line), "generated nil check")
-		}
 		progs = append(progs, p)
 	default:
 		fmt.Println("unimplemented OP:", v.Op.String())
@@ -1572,7 +1558,6 @@ var nefJumps = [2][2]floatingEQNEJump{
 
 func (s *genState) genBlock(b, next *ssa.Block) []*Prog {
 	var progs []*Prog
-	lineno = b.Line
 
 	switch b.Kind {
 	case ssa.BlockPlain:

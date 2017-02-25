@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 
+	"github.com/bjwbell/cmd/src"
 	"github.com/bjwbell/gir/gst"
 	"github.com/bjwbell/ssa"
 )
@@ -115,16 +116,18 @@ func (s *state) label(ident *ast.Ident) *ssaLabel {
 	return lab
 }
 
-func (s *state) Logf(msg string, args ...interface{})   { s.config.Logf(msg, args...) }
-func (s *state) Fatalf(msg string, args ...interface{}) { s.config.Fatalf(0, msg, args...) }
+func (s *state) Logf(msg string, args ...interface{}) { s.config.Logf(msg, args...) }
+
+func (s *state) Fatalf(msg string, args ...interface{}) { s.config.Fatalf(src.XPos{}, msg, args...) }
 func (s *state) Unimplementedf(msg string, args ...interface{}) {
 	// TODO: comment/remove when no longer needed for debugging
 	fmt.Printf("s.UNIMPLEMENTED msg: %v\n", fmt.Sprintf(msg, args))
 
-	s.config.Fatalf(0, msg, args...)
+	s.config.Fatalf(src.XPos{}, msg, args...)
 }
-func (s *state) Warnl(line int32, msg string, args ...interface{}) { s.config.Warnl(line, msg, args...) }
-func (s *state) Debug_checknil() bool                              { return s.config.Debug_checknil() }
+
+// func (s *state) Warnl(line int32, msg string, args ...interface{}) { s.config.Warnl(line, msg, args...) }
+func (s *state) Debug_checknil() bool { return s.config.Debug_checknil() }
 
 var (
 	// dummy node for the memory variable
@@ -161,7 +164,7 @@ func (s *state) endBlock() *ssa.Block {
 	s.defvars[b.ID] = s.vars
 	s.curBlock = nil
 	s.vars = nil
-	b.Line = s.peekLine()
+	b.Pos = s.peekLine()
 	return b
 }
 
@@ -170,14 +173,9 @@ func (s *state) pushLine(line int32) {
 	s.line = append(s.line, line)
 }
 
-// popLine pops the top of the line number stack.
-func (s *state) popLine() {
-	//s.line = s.line[:len(s.line)-1]
-}
-
 // peekLine peek the top of the line number stack.
-func (s *state) peekLine() int32 {
-	return 0 //s.line[len(s.line)-1]
+func (s *state) peekLine() src.XPos {
+	return src.XPos{}
 }
 
 func (s *state) Errorf(msg string, args ...interface{}) {
@@ -1045,10 +1043,10 @@ var opToSSA = map[opAndType]ssa.Op{
 	opAndType{OGE, types.Float64}: ssa.OpGeq64F,
 	opAndType{OGE, types.Float32}: ssa.OpGeq32F,
 
-	opAndType{OLROT, types.Uint8}:  ssa.OpLrot8,
-	opAndType{OLROT, types.Uint16}: ssa.OpLrot16,
-	opAndType{OLROT, types.Uint32}: ssa.OpLrot32,
-	opAndType{OLROT, types.Uint64}: ssa.OpLrot64,
+	// opAndType{OLROT, types.Uint8}:  ssa.OpLrot8,
+	// opAndType{OLROT, types.Uint16}: ssa.OpLrot16,
+	// opAndType{OLROT, types.Uint32}: ssa.OpLrot32,
+	// opAndType{OLROT, types.Uint64}: ssa.OpLrot64,
 
 	opAndType{OSQRT, types.Float64}: ssa.OpSqrt,
 }

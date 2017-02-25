@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/types"
 
+	"github.com/bjwbell/cmd/obj"
+	"github.com/bjwbell/cmd/src"
 	"github.com/bjwbell/ssa"
 )
 
@@ -81,7 +83,7 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 // Fatal reports a compiler error and exits.
-func (e *ssaExport) Fatalf(line int32, msg string, args ...interface{}) {
+func (e *ssaExport) Fatalf(pos src.XPos, msg string, args ...interface{}) {
 	Fatalf(msg, args...)
 }
 
@@ -93,7 +95,7 @@ func (e *ssaExport) Unimplementedf(line int32, msg string, args ...interface{}) 
 
 // Warnl reports a "warning", which is usually flag-triggered
 // logging output for the benefit of tests.
-func (e *ssaExport) Warnl(line int32, fmt_ string, args ...interface{}) {
+func (e *ssaExport) Warnl(pos src.XPos, fmt_ string, args ...interface{}) {
 	panic("Warnl")
 	//Warnl(line, fmt_, args...)
 }
@@ -102,7 +104,11 @@ func (e *ssaExport) Debug_checknil() bool {
 	return false
 }
 
-func (e *ssaExport) Line(l int32) string {
+func (e *ssaExport) Debug_wb() bool {
+	return false
+}
+
+func (e *ssaExport) Line(pos src.XPos) string {
 	return "<ssaExport.Line>"
 }
 
@@ -146,7 +152,19 @@ func (e *ssaExport) SplitInt64(localslot ssa.LocalSlot) (ssa.LocalSlot, ssa.Loca
 	return ssa.LocalSlot{}, ssa.LocalSlot{}
 }
 
+// array must be length 1
+func (e *ssaExport) SplitArray(localSlot ssa.LocalSlot) ssa.LocalSlot {
+	return ssa.LocalSlot{}
+}
+
 // AllocFrame assigns frame offsets to all live auto variables.
 func (e *ssaExport) AllocFrame(f *ssa.Func) {
 	// TODO
+}
+
+// Syslook returns a symbol of the runtime function/variable with the
+// given name.
+func (e *ssaExport) Syslook(string) *obj.LSym {
+	// TODO
+	return nil
 }
